@@ -1,0 +1,2055 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Raccolta YGO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: un controllo rapido "Ce l'ho già?" in cima, poi modulo con suggerimenti a sinistra e, a destra, raccoglitore e lista dei desideri con foto. */
+:root {
+  color-scheme: light;
+  --bg: #ECEEF4;
+  --raised: #FFFFFF;
+  --surface: #F6F7FB;
+  --ink: #151826;
+  --muted: #5A6078;
+  --line: #D5D9E6;
+  --accent: #3B40C4;
+  --accent-ink: #FFFFFF;
+  --gold: #8A6100;
+  --gold-bg: #F6E7B4;
+  --ok: #1D7348;
+  --ok-bg: #DDF0E4;
+  --warn: #9A4A06;
+  --warn-bg: #FBE8CF;
+  --bad: #B3261E;
+  --scrim: rgb(10 12 20 / 0.78);
+  --shadow: rgb(10 12 20 / 0.2);
+  --r-common: #5A6078;
+  --r-rare: #2F6A8E;
+  --r-super: #2E55C9;
+  --r-ultra: #8A6100;
+  --r-secret: #B0306E;
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10121B;
+    --raised: #1E2230;
+    --surface: #171A26;
+    --ink: #E9EBF5;
+    --muted: #9BA1BA;
+    --line: #2B3044;
+    --accent: #8E94FF;
+    --accent-ink: #10121B;
+    --gold: #E8BE55;
+    --gold-bg: #3A2F10;
+    --ok: #6FD39A;
+    --ok-bg: #12301F;
+    --warn: #F0A458;
+    --warn-bg: #3A2410;
+    --bad: #FF8A80;
+    --shadow: rgb(0 0 0 / 0.55);
+    --r-common: #9BA1BA;
+    --r-rare: #7FB3D5;
+    --r-super: #8CA8FF;
+    --r-ultra: #E8BE55;
+    --r-secret: #F27AB0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10121B;
+  --raised: #1E2230;
+  --surface: #171A26;
+  --ink: #E9EBF5;
+  --muted: #9BA1BA;
+  --line: #2B3044;
+  --accent: #8E94FF;
+  --accent-ink: #10121B;
+  --gold: #E8BE55;
+  --gold-bg: #3A2F10;
+  --ok: #6FD39A;
+  --ok-bg: #12301F;
+  --warn: #F0A458;
+  --warn-bg: #3A2410;
+  --bad: #FF8A80;
+  --shadow: rgb(0 0 0 / 0.55);
+  --r-common: #9BA1BA;
+  --r-rare: #7FB3D5;
+  --r-super: #8CA8FF;
+  --r-ultra: #E8BE55;
+  --r-secret: #F27AB0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 22px 56px;
+}
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2 { font-family: var(--f-display); font-weight: 700; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(32px, 6vw, 46px); line-height: 1; letter-spacing: -0.01em; }
+h2 { font-size: 22px; line-height: 1.15; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
+.tag { color: var(--muted); margin: 6px 0 0; max-width: 46ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 14px; }
+.stats b { font: 700 22px/1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 5px; }
+
+.banner { border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); background: var(--warn-bg); border-radius: 8px; padding: 10px 14px; }
+.banner.info { border-color: var(--line); background: var(--raised); }
+
+.check { background: var(--raised); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; }
+.check label { font: 700 24px/1.1 var(--f-display); }
+.check input { font-size: 18px; min-height: 52px; }
+.hint { margin: 0; color: var(--muted); }
+.dbnote { margin: -4px 0 0; color: var(--muted); font-size: 13px; }
+.dbbox { display: grid; gap: 8px; margin-top: -4px; }
+.dbbox .dbnote { margin: 0; }
+.dbrow { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.dbrow .dbnote { min-width: 0; }
+.dbnote.ok { color: var(--ok); }
+.dbnote.bad { color: var(--bad); }
+.verdict { border: 1px solid; border-radius: 8px; padding: 10px 14px; }
+.verdict.ok { background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.verdict.own { background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.verdict b { font-family: var(--f-display); font-size: 18px; }
+.verdict.ok b { color: var(--ok); }
+.verdict.own b { color: var(--warn); }
+#check-out { display: grid; gap: 10px; }
+#check-out .btn { justify-self: start; }
+.sub { font: 700 13px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 4px 0 0; }
+
+.cols { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .cols { grid-template-columns: minmax(300px, 370px) minmax(0, 1fr); align-items: start; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+form { display: grid; gap: 12px; }
+form label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 5px; }
+.opt { font-weight: 400; color: var(--muted); }
+.g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+input, select {
+  width: 100%; min-height: 44px; padding: 9px 12px;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 8px;
+}
+input::placeholder { color: var(--muted); opacity: .8; }
+.mono { font-family: var(--f-mono); font-size: 14px; text-transform: uppercase; }
+.mono::placeholder { text-transform: none; }
+.photo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.photo .btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.photo .pn { color: var(--muted); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+
+.sg { position: relative; }
+.sg-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 6; margin: 0; padding: 4px; list-style: none;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px var(--shadow);
+  max-height: min(360px, 55vh); overflow: auto;
+}
+.sg-list[hidden] { display: none; }
+.sg-list li { padding: 8px 10px; border-radius: 7px; cursor: pointer; display: grid; gap: 3px; min-width: 0; }
+.sg-list li:hover, .sg-list li[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 15%, var(--raised)); }
+.so-main { font: 600 17px/1.2 var(--f-display); overflow-wrap: anywhere; }
+.so-main .code { font-size: 13px; margin-right: 6px; }
+.so-sub { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 2px 8px; }
+
+.prints { border: 1px solid var(--line); background: var(--raised); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+.prints[hidden] { display: none; }
+.ph { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; }
+.ph b { font: 700 16px/1.2 var(--f-display); min-width: 0; overflow-wrap: anywhere; }
+.ph .tog { min-height: 32px; }
+.ph-note { margin: 0; color: var(--muted); font-size: 13px; }
+.pl { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; border-top: 1px solid var(--line); }
+.pr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 9px 6px; min-height: 44px; cursor: pointer; align-items: center; }
+.pr:hover { background: color-mix(in srgb, var(--accent) 12%, var(--raised)); }
+.pr .code { font-size: 13px; }
+.pr .set { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+
+.btn {
+  min-height: 44px; padding: 0 18px; border-radius: 8px; cursor: pointer; font-weight: 600;
+  background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.warn { background: var(--warn-bg); color: var(--ink); border-color: var(--warn); }
+.btn.small { min-height: 34px; padding: 0 12px; font-size: 14px; }
+.btn:disabled { opacity: .55; cursor: default; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btns .main-btn { flex: 1 1 180px; }
+
+.note { border: 1px solid; border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; font-size: 14px; }
+.note[hidden] { display: none; }
+.note .lbl { font: 700 13px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; }
+.note.warn { background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.note.warn .lbl { color: var(--warn); }
+.note.info { background: var(--raised); border-color: var(--line); }
+.note.info .lbl { color: var(--muted); }
+.note.ok { background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.note.ok .lbl { color: var(--ok); }
+#status { min-height: 20px; margin: 0; font-size: 14px; color: var(--muted); }
+#status.ok { color: var(--ok); }
+#status.bad { color: var(--bad); }
+
+.listhead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 6px 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab { background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 8px 12px 9px; cursor: pointer; font: 700 19px/1.1 var(--f-display); color: var(--muted); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .n { font: 600 13px/1 var(--f-body); background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 3px 7px; margin-left: 6px; font-variant-numeric: tabular-nums; vertical-align: 2px; }
+#count { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; padding-bottom: 8px; }
+.filters { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-bottom: 6px; }
+.filters .wide { grid-column: 1 / -1; }
+.tog { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; cursor: pointer; }
+.tog input { width: 18px; min-height: 18px; height: 18px; accent-color: var(--accent); }
+
+.rows { list-style: none; margin: 0; padding: 0; }
+.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start; }
+.row:first-child { border-top: 0; }
+.main { min-width: 0; display: grid; gap: 6px; }
+.nm { font: 600 19px/1.2 var(--f-display); overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.code { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; font: 600 12px/1 var(--f-body); padding: 5px 8px; border-radius: 5px; border: 1px solid var(--line); white-space: nowrap; }
+.chip.r { --rc: var(--r-common); color: var(--rc); border-color: color-mix(in srgb, var(--rc) 45%, transparent); background: color-mix(in srgb, var(--rc) 12%, var(--raised)); }
+.chip.r.rare { --rc: var(--r-rare); }
+.chip.r.super { --rc: var(--r-super); }
+.chip.r.ultra { --rc: var(--r-ultra); }
+.chip.r.secret { --rc: var(--r-secret); }
+.chip.ed1 { color: var(--gold); background: var(--gold-bg); border-color: color-mix(in srgb, var(--gold) 50%, transparent); letter-spacing: .05em; }
+.chip.ed { color: var(--muted); background: transparent; letter-spacing: .05em; }
+.chip.lang { font-family: var(--f-mono); font-weight: 500; background: transparent; }
+.chip.warn { color: var(--warn); background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.chip.soft { color: var(--muted); background: transparent; }
+
+.thumb { width: 52px; aspect-ratio: 59 / 86; border-radius: 4px; border: 1px solid var(--line); background: var(--raised); padding: 0; overflow: hidden; display: grid; place-items: center; }
+button.thumb { cursor: pointer; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.empty { border-style: dashed; color: var(--muted); font: 600 11px/1.2 var(--f-body); text-align: center; }
+.thumb.broken img { display: none; }
+
+.side { display: grid; gap: 6px; justify-items: end; }
+.step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
+.step button { width: 40px; height: 40px; border: 0; background: transparent; cursor: pointer; font-size: 20px; line-height: 1; }
+.step button:disabled { opacity: .35; cursor: default; }
+.step output { min-width: 34px; text-align: center; font: 700 17px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.step output.dupe { color: var(--gold); }
+.rm { border: 0; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 4px; min-height: 32px; }
+.rm.sure { color: var(--bad); font-weight: 600; }
+.own { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--gold); padding-top: 2px; }
+@media (max-width: 520px) {
+  .row { grid-template-columns: auto minmax(0, 1fr); }
+  .side { grid-column: 1 / -1; grid-auto-flow: column; justify-content: space-between; justify-items: start; align-items: center; }
+}
+.empty { margin: 0; padding: 22px 18px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); }
+.empty b { color: var(--ink); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.tools .btn { min-height: 38px; padding: 0 14px; font-size: 14px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.viewer { position: fixed; inset: 0; z-index: 20; background: var(--scrim); display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.viewer[hidden] { display: none; }
+.vbox { background: var(--raised); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; justify-items: center; max-width: min(92vw, 460px); }
+.vbox img { max-height: 66vh; max-width: 100%; border-radius: 6px; display: block; }
+.vbox h3 { margin: 0; font: 700 20px/1.2 var(--f-display); text-align: center; overflow-wrap: anywhere; }
+.sync { display: grid; gap: 12px; }
+.sync[hidden] { display: none; }
+.sync h2 { font-size: 22px; }
+.sync .g3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.sync form { gap: 14px; }
+.sync-status { margin: 0; font-size: 14px; color: var(--muted); }
+.sync-status.ok { color: var(--ok); }
+.sync-status.bad { color: var(--bad); }
+.sync details { border: 1px solid var(--line); border-radius: 8px; background: var(--raised); padding: 2px 12px; }
+.sync summary { cursor: pointer; font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+.sync ol { margin: 0 0 10px; padding-left: 20px; color: var(--muted); font-size: 13.5px; display: grid; gap: 5px; }
+.sync ol b { color: var(--ink); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Raccolta YGO</h1>
+      <p class="tag">Tutte le tue carte Yu-Gi-Oh! con foto, rarità, espansione, edizione e lingua. Controlla qui prima di comprare.</p>
+    </div>
+    <div class="stats" aria-live="polite">
+      <span><b id="s-copies">0</b>copie</span>
+      <span><b id="s-vers">0</b>versioni</span>
+      <span><b id="s-sets">0</b>espansioni</span>
+      <span><b id="s-wish">0</b>da comprare</span>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="check" aria-labelledby="chk-l">
+    <label id="chk-l" for="q">Ce l'ho già?</label>
+    <div class="sg">
+      <input id="q" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="q-lb" placeholder="Nome o codice, es. Mago Nero o LOB-IT005" autocomplete="off">
+      <ul id="q-lb" class="sg-list" role="listbox" aria-label="Carte suggerite" hidden></ul>
+    </div>
+    <div id="check-out"></div>
+  </section>
+
+  <div class="cols">
+    <section class="panel" aria-labelledby="add-h">
+      <form id="f" autocomplete="off" novalidate>
+        <h2 id="add-h">Aggiungi una carta</h2>
+        <div class="dbbox"><p id="db-note" class="dbnote"></p><div class="dbrow"><button type="button" id="db-update" class="btn ghost small" hidden>Aggiorna elenco carte</button><span id="db-msg" class="dbnote" role="status"></span></div><p id="db-hint" class="dbnote" hidden>Il pulsante carica l'ultima versione dell'elenco pubblicata con questa pagina.</p></div>
+        <div>
+          <label for="f-name">Nome della carta</label>
+          <div class="sg">
+            <input id="f-name" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="f-name-lb" placeholder="Drago Bianco Occhi Blu" required>
+            <ul id="f-name-lb" class="sg-list" role="listbox" aria-label="Carte suggerite" hidden></ul>
+          </div>
+        </div>
+        <div id="prints" class="prints" hidden></div>
+        <div class="g2">
+          <div>
+            <label for="f-code">Codice <span class="opt">se ce l'hai</span></label>
+            <div class="sg">
+              <input id="f-code" class="mono" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="f-code-lb" placeholder="LOB-IT001" maxlength="24">
+              <ul id="f-code-lb" class="sg-list" role="listbox" aria-label="Codici suggeriti" hidden></ul>
+            </div>
+          </div>
+          <div>
+            <label for="f-qty">Copie</label>
+            <input id="f-qty" type="number" min="1" max="999" value="1" inputmode="numeric">
+          </div>
+        </div>
+        <div>
+          <label for="f-set">Espansione</label>
+          <input id="f-set" list="dl-set" placeholder="Legend of Blue Eyes White Dragon">
+        </div>
+        <div>
+          <label for="f-rar">Rarità</label>
+          <input id="f-rar" list="dl-rar" placeholder="Ultra Rare" required>
+        </div>
+        <div class="g2">
+          <div>
+            <label for="f-ed">Edizione</label>
+            <select id="f-ed">
+              <option value="1st">1ª Edizione</option>
+              <option value="unl" selected>Unlimited</option>
+              <option value="ltd">Limited</option>
+            </select>
+          </div>
+          <div>
+            <label for="f-lang">Lingua</label>
+            <select id="f-lang"></select>
+          </div>
+        </div>
+        <div id="photo-row" hidden>
+          <label for="f-photo-btn">Foto <span class="opt">facoltativa</span></label>
+          <div class="photo">
+            <button id="f-photo-btn" type="button" class="btn ghost">Scegli foto</button>
+            <input id="f-photo" type="file" accept="image/*" class="sr" tabindex="-1" aria-label="Foto della carta">
+            <span id="f-photo-name" class="pn"></span>
+            <button id="f-photo-clear" type="button" class="btn ghost small" hidden>Togli</button>
+          </div>
+        </div>
+        <div id="dupe" aria-live="polite" hidden></div>
+        <div class="btns">
+          <button id="f-btn" class="btn main-btn" type="submit">Aggiungi alla raccolta</button>
+          <button id="f-wish" class="btn ghost" type="button">Aggiungi ai desideri</button>
+        </div>
+        <p id="status" role="status"></p>
+      </form>
+      <datalist id="dl-rar"></datalist>
+      <datalist id="dl-set"></datalist>
+    </section>
+
+    <section class="panel" aria-label="Raccoglitore e lista dei desideri">
+      <div class="listhead">
+        <div class="tabs" role="tablist" aria-label="Elenco">
+          <button id="tab-col" class="tab" role="tab" aria-selected="true" aria-controls="list" type="button">Raccoglitore</button>
+          <button id="tab-wish" class="tab" role="tab" aria-selected="false" aria-controls="list" type="button">Da comprare</button>
+        </div>
+        <span id="count"></span>
+      </div>
+      <div id="filters" class="filters" hidden>
+        <input id="fq" class="wide" type="search" placeholder="Filtra per nome, codice o espansione" aria-label="Filtra per nome, codice o espansione">
+        <select id="fr" aria-label="Rarità"></select>
+        <select id="fe" aria-label="Edizione"></select>
+        <select id="fl" aria-label="Lingua"></select>
+        <select id="fs" aria-label="Espansione"></select>
+        <select id="fo" aria-label="Ordine">
+          <option value="name">Ordine: nome</option>
+          <option value="recent">Ordine: più recenti</option>
+          <option value="set">Ordine: espansione</option>
+          <option value="qty">Ordine: più copie</option>
+        </select>
+        <label class="tog"><input id="fd" type="checkbox"> Solo doppioni</label>
+      </div>
+      <div id="list" role="tabpanel"></div>
+      <div class="tools" id="tools" hidden>
+        <button type="button" class="btn ghost" id="export" hidden>Esporta CSV</button>
+        <button type="button" class="btn ghost" id="copycsv" hidden>Copia CSV</button>
+        <span id="import-wrap">
+          <button type="button" class="btn ghost" id="import-btn">Importa CSV</button>
+          <span>Colonne: Nome; Codice; Espansione; Rarità; Edizione; Lingua; Quantità</span>
+        </span>
+        <input id="import" type="file" accept=".csv,text/csv" class="sr" tabindex="-1" aria-label="File CSV da importare">
+      </div>
+    </section>
+  </div>
+
+  <section id="sync" class="panel sync" aria-labelledby="sync-h" hidden>
+    <h2 id="sync-h">Altri dispositivi</h2>
+    <p class="hint">Collega un repository GitHub privato per ritrovare raccolta, lista dei desideri e foto su telefono e computer.</p>
+    <p id="sync-status" class="sync-status" role="status"></p>
+    <details>
+      <summary>Come si collega</summary>
+      <ol>
+        <li>Su GitHub crea un repository <b>privato</b> solo per i tuoi dati, per esempio <b>ygo-dati</b>, con l'opzione “Add a README file”.</li>
+        <li>Vai in Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> e crea un token. Come accesso scegli “Only select repositories” e solo <b>ygo-dati</b>. Nei permessi imposta <b>Contents: Read and write</b>.</li>
+        <li>Incolla qui sotto nome del repository e token, poi premi “Collega e sincronizza”.</li>
+        <li>Su ogni altro dispositivo apri questo sito e ripeti il passaggio 3 con gli stessi dati.</li>
+      </ol>
+      <p class="hint">Il token resta salvato solo in questo browser. Se due dispositivi cambiano la stessa carta, vince la modifica più recente.</p>
+    </details>
+    <form id="sync-form" autocomplete="off" novalidate>
+      <div class="g3">
+        <div>
+          <label for="sy-repo">Repository dati</label>
+          <input id="sy-repo" placeholder="tuonome/ygo-dati" spellcheck="false" autocapitalize="off">
+        </div>
+        <div>
+          <label for="sy-token">Token di accesso</label>
+          <input id="sy-token" type="password" placeholder="github_pat_…" spellcheck="false" autocapitalize="off">
+        </div>
+        <div>
+          <label for="sy-branch">Ramo</label>
+          <input id="sy-branch" value="main" spellcheck="false" autocapitalize="off">
+        </div>
+      </div>
+      <div class="btns">
+        <button type="submit" id="sy-link" class="btn">Collega e sincronizza</button>
+        <button type="button" id="sy-now" class="btn ghost" hidden>Sincronizza ora</button>
+        <button type="button" id="sy-off" class="btn ghost" hidden>Scollega</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<input id="pick" type="file" accept="image/*" class="sr" tabindex="-1" aria-label="Foto della carta">
+
+<div id="viewer" class="viewer" hidden>
+  <div class="vbox" role="dialog" aria-modal="true" aria-labelledby="v-title">
+    <h3 id="v-title"></h3>
+    <img id="v-img" alt="">
+    <div class="btns">
+      <button type="button" class="btn ghost small" id="v-change">Cambia foto</button>
+      <button type="button" class="btn ghost small" id="v-remove">Togli foto</button>
+      <button type="button" class="btn small" id="v-close">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+  var norm = function (s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  };
+  var compact = function (s) { return norm(s).replace(/[^a-z0-9]/g, ""); };
+  var words = function (s) { return norm(s).replace(/[^a-z0-9]+/g, " ").trim(); };
+  var slug = function (s) { return norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); };
+
+  var RARITIES = ["Common", "Rare", "Super Rare", "Ultra Rare", "Secret Rare", "Ultimate Rare", "Ghost Rare", "Gold Rare", "Premium Gold Rare", "Platinum Rare", "Starlight Rare", "Collector's Rare", "Prismatic Secret Rare", "Quarter Century Secret Rare", "Extra Secret Rare", "Platinum Secret Rare", "10000 Secret Rare", "Short Print", "Super Short Print", "Parallel Rare", "Super Parallel Rare", "Ultra Parallel Rare", "Mosaic Rare", "Shatterfoil Rare", "Starfoil Rare", "Millennium Rare", "Pharaoh's Rare", "Ghost/Gold Rare"];
+  var LANGS = [["IT", "Italiano"], ["EN", "Inglese"], ["DE", "Tedesco"], ["FR", "Francese"], ["ES", "Spagnolo"], ["PT", "Portoghese"], ["JP", "Giapponese"], ["KR", "Coreano"], ["SC", "Cinese"], ["AE", "Inglese asiatico"]];
+  var EDITIONS = { "1st": "1ª Edizione", "unl": "Unlimited", "ltd": "Limited" };
+  var EDSHORT = { "1st": "1ª ED.", "unl": "UNLIMITED", "ltd": "LIMITED" };
+  var CODE_LANG = { EN: "EN", E: "EN", DE: "DE", G: "DE", FR: "FR", F: "FR", IT: "IT", I: "IT", ES: "ES", S: "ES", SP: "ES", PT: "PT", P: "PT", JP: "JP", J: "JP", KR: "KR", K: "KR", SC: "SC", AE: "AE" };
+  var LANG_NAMES = { italiano: "IT", inglese: "EN", english: "EN", tedesco: "DE", german: "DE", francese: "FR", french: "FR", spagnolo: "ES", spanish: "ES", portoghese: "PT", portuguese: "PT", giapponese: "JP", japanese: "JP", coreano: "KR", korean: "KR", cinese: "SC", chinese: "SC" };
+  var DEFMARK = { EN: "EN", IT: "IT", DE: "DE", FR: "FR", ES: "SP", PT: "PT", JP: "JP", KR: "KR", SC: "SC" };
+  var NAMEIDX = { EN: 0, IT: 1, DE: 2, FR: 3, ES: 4, PT: 5 };
+
+  var cards = [];
+  var wishes = [];
+  var loadedC = false, loadedW = false;
+  var readOnly = false;
+  var langTouched = false;
+  var tab = "col";
+  var pendingDel = null, pendingTimer = null, statusTimer = null;
+  var repo = null, downloads = null, assets = null, photoOK = false, photoMode = "";
+  var formPhoto = null;
+  var viewing = null, pickTarget = null;
+  var formPid = 0;
+  var picker = null;
+
+  function isLoaded() { return loadedC && loadedW; }
+  function canonRarity(r) {
+    var n = norm(r);
+    for (var i = 0; i < RARITIES.length; i++) if (norm(RARITIES[i]) === n) return RARITIES[i];
+    return String(r || "").trim();
+  }
+  function rcls(r) {
+    var n = norm(r);
+    if (/secret/.test(n)) return "secret";
+    if (/ultra|ultimate|gold|starlight|platinum|quarter|collector|ghost|premium|pharaoh|millennium/.test(n)) return "ultra";
+    if (/super|short/.test(n)) return "super";
+    if (/rare|parallel|mosaic|foil/.test(n)) return "rare";
+    return "common";
+  }
+  function identity(c) {
+    return c.code ? "c:" + compact(c.code) : "n:" + compact(c.name) + "|" + compact(c.set);
+  }
+  function makeId(c) {
+    var base = c.code ? slug(c.code) : slug(c.name) + "." + slug(c.set);
+    return [base, slug(c.rarity), c.edition, c.lang].join("~").slice(0, 190);
+  }
+  function findExact(d, list) {
+    list = list || cards;
+    var id = identity(d), r = norm(d.rarity);
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      if (identity(c) === id && norm(c.rarity) === r && c.edition === d.edition && c.lang === d.lang) return c;
+    }
+    return null;
+  }
+  function related(d, list) {
+    var n = compact(d.name), k = compact(d.code), p = d.pid || 0;
+    return (list || cards).filter(function (c) {
+      return (n && compact(c.name) === n) || (k && compact(c.code) === k) || (p && pidOf(c) === p);
+    });
+  }
+  function matches(q, list) {
+    var cq = compact(q), nq = norm(q);
+    if (!cq) return [];
+    var pids = pidsForQuery(q);
+    return (list || cards).filter(function (c) {
+      if (compact(c.name).indexOf(cq) >= 0 || compact(c.code).indexOf(cq) >= 0 || norm(c.set).indexOf(nq) >= 0) return true;
+      var p = pidOf(c);
+      return p && pids[p];
+    }).sort(byName);
+  }
+  function byName(a, b) {
+    return (a.name || a.code || "").localeCompare(b.name || b.code || "", "it", { sensitivity: "base" }) ||
+      (a.code || "").localeCompare(b.code || "");
+  }
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+  function listFor(kind) { return kind === "wishlist" ? wishes : cards; }
+  function imgInUse(id) {
+    return cards.concat(wishes).some(function (c) { return c.img === id; });
+  }
+  function releaseAsset(id) {
+    if (!id || imgInUse(id)) return;
+    if (photoMode === "assets" && assets) assets.delete(id).catch(function () {});
+    else if (photoMode === "local") { idbDel(id); delete urlMemo[id]; queueImgDelete(id); }
+  }
+
+  /* ---------- elenco carte (indice per suggerimenti) ---------- */
+  var DB = null;                 // {sets, rar, rs, cards}
+  var dbState = "loading";       // loading | ready | none
+  var nameN = [];                // per carta: nomi normalizzati
+  var nameW = [];                // per carta: numero di stampe (per ordinare i suggerimenti)
+  var nameMap = null;            // nome normalizzato -> indice carta (o -1 se ambiguo)
+  var pidMap = null;             // password -> indice carta
+  var codesC = [], cIdx = [], gIdx = [], eIdx = [], lIdx = [];
+  var codeMap = null;
+  var codeReady = false;
+  var decoded = {};
+  var dbMode = "none";           // none | inline | fetch
+  var indexGen = 0, lastChecked = "";
+  var LORDER = ["EN", "IT", "DE", "FR", "ES", "PT", "JP", "KR", "SC"];
+
+  function parseEnt(s) {
+    var lang = s.slice(0, 2), r = s.slice(2), marker = DEFMARK[lang] || lang;
+    if (r.charAt(0) === "~") { var p = r.split("~"); marker = p[1]; r = p[2]; }
+    return { lang: lang, marker: marker, rs: +r };
+  }
+  function codeOf(g, e) { return g.prefix ? g.prefix + "-" + e.marker + g.number : g.number; }
+  function groupsOf(ci) {
+    if (decoded[ci]) return decoded[ci];
+    var out = DB.cards[ci][2].map(function (g) {
+      return { si: g[0], prefix: g[1], number: g[2], ents: g[3].split(" ").map(parseEnt) };
+    });
+    decoded[ci] = out;
+    return out;
+  }
+  function nameIn(ci, lang) {
+    var n = DB.cards[ci][1], i = NAMEIDX[lang];
+    return (i != null && n[i]) ? n[i] : n[0];
+  }
+  function prefLang() { return $("f-lang").value || "IT"; }
+
+  function buildIndex(raw) {
+    var gen = ++indexGen;
+    DB = raw;
+    nameN = []; nameW = []; codesC = []; cIdx = []; gIdx = []; eIdx = []; lIdx = [];
+    decoded = {}; pidCache = {}; codeReady = false;
+    var n = DB.cards.length, i, k;
+    nameMap = new Map(); pidMap = new Map();
+    for (i = 0; i < n; i++) {
+      var c = DB.cards[i], arr = [], seen = {};
+      for (k = 0; k < c[1].length; k++) {
+        var w = words(c[1][k]);
+        if (w && !seen[w]) {
+          seen[w] = 1; arr.push(w);
+          nameMap.set(w, nameMap.has(w) && nameMap.get(w) !== i ? -1 : i);
+        }
+      }
+      nameN.push(arr);
+      var wsum = 0;
+      for (k = 0; k < c[2].length; k++) wsum += c[2][k][3].split(" ").length;
+      nameW.push(wsum);
+      if (c[0]) pidMap.set(c[0], i);
+    }
+    dbState = "ready";
+    codeMap = new Map();
+    var pos = 0, CH = 1500;
+    function chunk() {
+      if (gen !== indexGen) return;
+      var end = Math.min(n, pos + CH);
+      for (; pos < end; pos++) {
+        var gs = DB.cards[pos][2];
+        for (var g = 0; g < gs.length; g++) {
+          var ents = gs[g][3].split(" "), pre = gs[g][1], num = gs[g][2];
+          for (var e = 0; e < ents.length; e++) {
+            var en = parseEnt(ents[e]);
+            var code = pre ? pre + "-" + en.marker + num : num;
+            var cc = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            codesC.push(cc); cIdx.push(pos); gIdx.push(g); eIdx.push(e);
+            lIdx.push(LORDER.indexOf(en.lang));
+            if (!codeMap.has(cc)) codeMap.set(cc, codesC.length - 1);
+          }
+        }
+      }
+      if (pos < n) setTimeout(chunk, 0);
+      else { codeReady = true; renderDbNote(); renderAll(); }
+    }
+    chunk();
+    renderDbNote();
+  }
+  function fmtDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+    if (!m) return "";
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+  }
+  function readChecked() {
+    try { return localStorage.getItem("ygo-db-checked") || lastChecked; } catch (e) { return lastChecked; }
+  }
+  function renderDbNote() {
+    var el = $("db-note");
+    $("db-update").hidden = dbMode !== "fetch";
+    $("db-hint").hidden = dbMode !== "fetch";
+    if (dbState === "ready") {
+      var d = fmtDate(DB.date), chk = readChecked(), when = "";
+      if (chk) { try { when = new Date(chk).toLocaleString("it-IT", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) {} }
+      el.textContent = "Elenco carte: " + plural(DB.cards.length, "carta", "carte") + " e " + plural(DB.sets.length, "espansione", "espansioni") +
+        (d ? ", aggiornato al " + d : "") + "." + (codeReady ? "" : " Preparo i codici\u2026") +
+        (when ? " Ultimo controllo: " + when + "." : "") +
+        (dbMode === "inline" ? " Per aggiornarlo sostituisci questo file con la versione nuova." : "");
+    } else if (dbState === "loading") el.textContent = "Carico l'elenco delle carte per i suggerimenti\u2026";
+    else el.textContent = dbMode === "fetch" ? "Elenco carte non disponibile." : "";
+  }
+  function loadDB() {
+    if (window.YGO_NODB) return Promise.resolve(null);
+    var el = document.getElementById("ygo-db");
+    if (el) {
+      dbMode = "inline";
+      try { return Promise.resolve(JSON.parse(el.textContent)); } catch (e) { return Promise.resolve(null); }
+    }
+    dbMode = "fetch";
+    return fetch("cards.json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }
+
+  function scoreName(s, nq, toks) {
+    if (s === nq) return 0;
+    if (s.indexOf(nq) === 0) return 1;
+    var i;
+    for (i = 0; i < toks.length; i++) if (s.indexOf(toks[i]) < 0) return 9;
+    var ws = " " + s;
+    for (i = 0; i < toks.length; i++) if (ws.indexOf(" " + toks[i]) < 0) return 3;
+    return 2;
+  }
+  function searchNames(q, lim) {
+    var nq = words(q);
+    if (dbState !== "ready" || nq.length < 2) return [];
+    var toks = nq.split(" "), res = [], i, k;
+    for (i = 0; i < nameN.length; i++) {
+      var arr = nameN[i], best = 9;
+      for (k = 0; k < arr.length; k++) { var sc = scoreName(arr[k], nq, toks); if (sc < best) best = sc; }
+      if (best < 9) res.push([best, -nameW[i], arr[0].length, i]);
+    }
+    res.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]; });
+    return res.slice(0, lim).map(function (r) { return r[3]; });
+  }
+  function searchCodes(q, lim) {
+    var cq = String(q || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!codeReady || cq.length < 2) return [];
+    var hits = [], i, n = codesC.length;
+    for (i = 0; i < n; i++) { if (codesC[i].indexOf(cq) === 0) { hits.push(i); if (hits.length >= 5000) break; } }
+    if (!hits.length && cq.length >= 3) {
+      for (i = 0; i < n; i++) { if (codesC[i].indexOf(cq) > 0) { hits.push(i); if (hits.length >= 300) break; } }
+    }
+    var pl = LORDER.indexOf(prefLang());
+    hits.sort(function (a, b) {
+      var la = lIdx[a] === pl ? 0 : 1, lb = lIdx[b] === pl ? 0 : 1;
+      if (la !== lb) return la - lb;
+      return codesC[a] < codesC[b] ? -1 : codesC[a] > codesC[b] ? 1 : 0;
+    });
+    return hits.slice(0, lim);
+  }
+  function pidsForQuery(q) {
+    var out = {};
+    if (dbState !== "ready") return out;
+    searchNames(q, 40).forEach(function (ci) { var p = DB.cards[ci][0]; if (p) out[p] = 1; });
+    var cq = String(q || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (codeReady && cq.length >= 3) {
+      var h = searchCodes(q, 40);
+      h.forEach(function (i) { var p = DB.cards[cIdx[i]][0]; if (p) out[p] = 1; });
+    }
+    return out;
+  }
+  var pidCache = {};
+  function pidOf(c) {
+    if (c.pid) return c.pid;
+    if (dbState !== "ready") return 0;
+    var key = (c.code || "") + "|" + (c.name || "");
+    if (key in pidCache) return pidCache[key];
+    var p = 0, cc = (c.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (cc && codeReady && codeMap.has(cc)) p = DB.cards[cIdx[codeMap.get(cc)]][0] || 0;
+    if (!p && c.name) {
+      var ci = nameMap.get(words(c.name));
+      if (ci != null && ci >= 0) p = DB.cards[ci][0] || 0;
+    }
+    pidCache[key] = p;
+    return p;
+  }
+  function resolvePid(d) {
+    if (d.pid) return d.pid;
+    return pidOf({ code: d.code, name: d.name });
+  }
+
+  /* ---------- suggerimenti ---------- */
+  function Suggest(input, getItems) {
+    var ul = $(input.id + "-lb"), items = [], active = -1;
+    function close() {
+      ul.hidden = true; active = -1;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+    }
+    function draw() {
+      ul.innerHTML = items.map(function (it, i) {
+        return '<li role="option" id="' + ul.id + "-" + i + '" data-i="' + i + '" aria-selected="' + (i === active) + '">' + it.html + "</li>";
+      }).join("");
+      ul.hidden = !items.length;
+      input.setAttribute("aria-expanded", String(!!items.length));
+      if (active >= 0) {
+        input.setAttribute("aria-activedescendant", ul.id + "-" + active);
+        var li = ul.children[active];
+        if (li && li.scrollIntoView) li.scrollIntoView({ block: "nearest" });
+      } else input.removeAttribute("aria-activedescendant");
+    }
+    function refresh() {
+      items = getItems(input.value) || [];
+      active = -1;
+      draw();
+    }
+    function pick(i) {
+      var it = items[i];
+      if (!it) return;
+      close();
+      it.pick();
+    }
+    input.addEventListener("input", refresh);
+    input.addEventListener("blur", close);
+    input.addEventListener("keydown", function (e) {
+      var open = !ul.hidden;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (!open) { refresh(); if (ul.hidden) return; }
+        e.preventDefault();
+        var n = items.length;
+        active = e.key === "ArrowDown" ? (active + 1) % n : (active - 1 + n) % n;
+        draw();
+      } else if (e.key === "Enter" && open && active >= 0) {
+        e.preventDefault(); pick(active);
+      } else if (e.key === "Escape" && open) {
+        e.preventDefault(); close();
+      } else if (e.key === "Tab") close();
+    });
+    ul.addEventListener("mousedown", function (e) {
+      e.preventDefault();
+      var li = e.target.closest("li[data-i]");
+      if (li) pick(+li.getAttribute("data-i"));
+    });
+    return { close: close };
+  }
+
+  function langBadge(l) { return '<span class="chip lang">' + esc(l) + "</span>"; }
+  function nameItems(value, onPick) {
+    var pl = prefLang();
+    return searchNames(value, 8).map(function (ci) {
+      var n = DB.cards[ci][1];
+      var main = nameIn(ci, pl), other = n[0] !== main ? n[0] : (n[1] || "");
+      return {
+        html: '<span class="so-main">' + esc(main) + '</span><span class="so-sub">' + (other ? "<span>" + esc(other) + "</span>" : "") + "<span>" + plural(nameW[ci], "stampa", "stampe") + "</span></span>",
+        pick: function () { onPick(ci); }
+      };
+    });
+  }
+  function codeItems(value, onPick) {
+    return searchCodes(value, 8).map(function (i) {
+      var ci = cIdx[i], g = groupsOf(ci)[gIdx[i]], e = g.ents[eIdx[i]];
+      var rars = DB.rs[e.rs].map(function (r) { return DB.rar[r]; });
+      var rtxt = rars.length > 2 ? rars.slice(0, 2).join(", ") + " +" + (rars.length - 2) : rars.join(", ");
+      return {
+        html: '<span class="so-main"><span class="code">' + esc(codeOf(g, e)) + "</span>" + esc(nameIn(ci, e.lang)) + '</span><span class="so-sub"><span>' + esc(DB.sets[g.si]) + "</span>" + (rtxt ? "<span>" + esc(rtxt) + "</span>" : "") + langBadge(e.lang) + "</span>",
+        pick: function () { onPick(ci, gIdx[i], eIdx[i]); }
+      };
+    });
+  }
+
+  /* ---------- scelta della stampa ---------- */
+  function setLang(l) {
+    var sel = $("f-lang");
+    if (Array.prototype.some.call(sel.options, function (o) { return o.value === l; })) { sel.value = l; langTouched = true; }
+  }
+  function applyPrint(ci, gi, ei, ri) {
+    var g = groupsOf(ci)[gi], e = g.ents[ei], rids = DB.rs[e.rs];
+    $("f-code").value = codeOf(g, e);
+    $("f-set").value = DB.sets[g.si];
+    setLang(e.lang);
+    $("f-name").value = nameIn(ci, e.lang);
+    if (ri >= 0 && rids[ri] != null) $("f-rar").value = canonRarity(DB.rar[rids[ri]]);
+    else if (rids.length === 1) $("f-rar").value = canonRarity(DB.rar[rids[0]]);
+    else $("f-rar").value = "";
+    formPid = DB.cards[ci][0] || 0;
+    hidePicker();
+    renderDupe();
+    if (!$("f-rar").value) $("f-rar").focus(); else $("f-ed").focus();
+  }
+  function printRows(p) {
+    var out = [], gs = groupsOf(p.ci);
+    gs.forEach(function (g, gi) {
+      g.ents.forEach(function (e, ei) {
+        var code = codeOf(g, e);
+        if (p.code && compact(code) !== p.code) return;
+        if (!p.code && !p.all && e.lang !== p.lang) return;
+        var rids = DB.rs[e.rs];
+        if (!rids.length) out.push({ gi: gi, ei: ei, ri: -1, code: code, set: DB.sets[g.si], rar: "", lang: e.lang });
+        rids.forEach(function (r, ri) { out.push({ gi: gi, ei: ei, ri: ri, code: code, set: DB.sets[g.si], rar: DB.rar[r], lang: e.lang }); });
+      });
+    });
+    out.sort(function (a, b) {
+      return a.set.localeCompare(b.set, "en") || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0) || a.rar.localeCompare(b.rar, "en");
+    });
+    return out;
+  }
+  function showPicker(ci, opts) {
+    picker = { ci: ci, lang: prefLang(), all: false, code: (opts && opts.code) || "" };
+    renderPicker();
+  }
+  function hidePicker() { picker = null; $("prints").hidden = true; $("prints").innerHTML = ""; }
+  function renderPicker() {
+    var box = $("prints");
+    if (!picker || dbState !== "ready") { box.hidden = true; return; }
+    var rows = printRows(picker), note = "";
+    if (!rows.length && !picker.all && !picker.code) { picker.all = true; rows = printRows(picker); note = "Nessuna stampa in " + picker.lang + ": ti mostro tutte le lingue."; }
+    var total = rows.length;
+    rows = rows.slice(0, 200);
+    var nm = nameIn(picker.ci, picker.lang);
+    box.innerHTML = '<div class="ph"><b>Scegli la stampa: ' + esc(nm) + "</b>" +
+      (picker.code ? "" : '<label class="tog"><input type="checkbox" id="pk-all"' + (picker.all ? " checked" : "") + "> Tutte le lingue</label>") +
+      '<button type="button" class="btn ghost small" id="pk-close">Chiudi</button></div>' +
+      (note ? '<p class="ph-note">' + esc(note) + "</p>" : "") +
+      (rows.length
+        ? '<div class="pl" role="list">' + rows.map(function (r, i) {
+          return '<button type="button" class="pr" role="listitem" data-i="' + i + '"><span><span class="code">' + esc(r.code) + "</span></span><span class=\"chips\">" +
+            (r.rar ? '<span class="chip r ' + rcls(r.rar) + '">' + esc(r.rar) + "</span>" : "") + langBadge(r.lang) +
+            '</span><span class="set">' + esc(r.set) + "</span></button>";
+        }).join("") + "</div>" + (total > rows.length ? '<p class="ph-note">Mostro le prime ' + rows.length + " di " + total + ". Scrivi il codice per restringere.</p>" : "")
+        : '<p class="ph-note">Nessuna stampa trovata.</p>');
+    box.hidden = false;
+    box._rows = rows;
+  }
+  $("prints").addEventListener("click", function (e) {
+    if (e.target.closest("#pk-close")) { hidePicker(); return; }
+    var b = e.target.closest("button.pr");
+    if (!b || !picker) return;
+    var r = this._rows[+b.getAttribute("data-i")];
+    if (r) applyPrint(picker.ci, r.gi, r.ei, r.ri);
+  });
+  $("prints").addEventListener("change", function (e) {
+    if (e.target.id === "pk-all" && picker) { picker.all = e.target.checked; renderPicker(); }
+  });
+  function autofillFromCode() {
+    if (dbState !== "ready" || !codeReady) return false;
+    var cc = $("f-code").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!cc || !codeMap.has(cc)) return false;
+    var i = codeMap.get(cc), ci = cIdx[i], g = groupsOf(ci)[gIdx[i]], e = g.ents[eIdx[i]], rids = DB.rs[e.rs];
+    formPid = DB.cards[ci][0] || 0;
+    if (!$("f-name").value.trim()) $("f-name").value = nameIn(ci, e.lang);
+    if (!$("f-set").value.trim()) $("f-set").value = DB.sets[g.si];
+    if (!langTouched) setLang(e.lang);
+    if (!$("f-rar").value.trim() && rids.length === 1) $("f-rar").value = canonRarity(DB.rar[rids[0]]);
+    return true;
+  }
+
+  /* ---------- archivio: db condiviso, oppure memoria locale ---------- */
+  var chain = Promise.resolve();
+  function enqueue(fn) {
+    var p = chain.then(fn);
+    chain = p.catch(function () {});
+    return p;
+  }
+  function makeDbRepo(db) {
+    var cols = { cards: db.collection("cards"), wishlist: db.collection("wishlist") };
+    return {
+      sub: function (kind, cb, err) {
+        return cols[kind].onSnapshot(function (s) {
+          cb(s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }));
+        }, err);
+      },
+      add: function (d) {
+        var ex = findExact(d, cards);
+        var ref = cols.cards.doc(ex ? ex.id : makeId(d));
+        return ref.get().then(function (snap) {
+          var now = Date.now();
+          if (snap.exists) {
+            var cur = snap.data();
+            var qty = (Number(cur.qty) || 0) + d.qty;
+            var patch = { qty: qty, updated: now };
+            if (!cur.img && d.img) patch.img = d.img;
+            if (!cur.pid && d.pid) patch.pid = d.pid;
+            return ref.update(patch).then(function () { return { merged: true, qty: qty }; });
+          }
+          return ref.set({ name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, qty: d.qty, img: d.img || "", pid: d.pid || 0, updated: now })
+            .then(function () { return { merged: false, qty: d.qty }; });
+        });
+      },
+      addWish: function (d) {
+        var ex = findExact(d, wishes);
+        var ref = cols.wishlist.doc(ex ? ex.id : makeId(d));
+        return ref.get().then(function (snap) {
+          if (snap.exists) return { existed: true };
+          return ref.set({ name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, img: d.img || "", pid: d.pid || 0, updated: Date.now() })
+            .then(function () { return { existed: false }; });
+        });
+      },
+      setQty: function (id, qty) { return cols.cards.doc(id).update({ qty: qty, updated: Date.now() }); },
+      setImg: function (kind, id, img) { return cols[kind].doc(id).update({ img: img || "", updated: Date.now() }); },
+      remove: function (kind, id) { return cols[kind].doc(id).delete(); }
+    };
+  }
+  /* Salvataggio nel browser (localStorage) se disponibile, altrimenti solo in memoria. */
+  var LS_KEY = "ygo-raccolta-v1";
+  function makeLocalRepo(persist) {
+    var lists = { cards: [], wishlist: [], tomb: {} }, cbs = {}, api = {};
+    if (persist) {
+      try {
+        var o = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+        if (o && Array.isArray(o.cards)) lists.cards = o.cards;
+        if (o && Array.isArray(o.wishlist)) lists.wishlist = o.wishlist;
+        if (o && o.tomb && typeof o.tomb === "object") lists.tomb = o.tomb;
+      } catch (e) {}
+    }
+    function save() {
+      if (!persist) return;
+      try { localStorage.setItem(LS_KEY, JSON.stringify(lists)); } catch (e) { say("Non riesco a salvare nel browser: esporta il CSV per non perdere i dati.", "bad"); }
+    }
+    function push(kind) { save(); if (cbs[kind]) cbs[kind](lists[kind].slice()); if (api.onChange) api.onChange(); }
+    api.sub = function (kind, cb) { cbs[kind] = cb; setTimeout(function () { if (cbs[kind]) cbs[kind](lists[kind].slice()); }, 0); return function () {}; };
+    api.add = function (d) {
+      var ex = findExact(d, cards), now = Date.now();
+      var cur = ex && lists.cards.filter(function (c) { return c.id === ex.id; })[0];
+      if (cur) {
+        cur.qty += d.qty; cur.updated = now;
+        if (!cur.img && d.img) cur.img = d.img;
+        if (!cur.pid && d.pid) cur.pid = d.pid;
+        push("cards"); return Promise.resolve({ merged: true, qty: cur.qty });
+      }
+      var id = makeId(d);
+      delete lists.tomb["cards:" + id];
+      lists.cards.push({ id: id, name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, qty: d.qty, img: d.img || "", pid: d.pid || 0, updated: now });
+      push("cards");
+      return Promise.resolve({ merged: false, qty: d.qty });
+    };
+    api.addWish = function (d) {
+      if (findExact(d, wishes)) return Promise.resolve({ existed: true });
+      var id = makeId(d);
+      delete lists.tomb["wishlist:" + id];
+      lists.wishlist.push({ id: id, name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, img: d.img || "", pid: d.pid || 0, updated: Date.now() });
+      push("wishlist");
+      return Promise.resolve({ existed: false });
+    };
+    api.setQty = function (id, qty) {
+      lists.cards.forEach(function (c) { if (c.id === id) { c.qty = qty; c.updated = Date.now(); } });
+      push("cards"); return Promise.resolve();
+    };
+    api.setImg = function (kind, id, img) {
+      lists[kind].forEach(function (c) { if (c.id === id) { c.img = img || ""; c.updated = Date.now(); } });
+      push(kind); return Promise.resolve();
+    };
+    api.remove = function (kind, id) {
+      lists[kind] = lists[kind].filter(function (c) { return c.id !== id; });
+      lists.tomb[kind + ":" + id] = Date.now();
+      push(kind); return Promise.resolve();
+    };
+    api.getState = function () { return JSON.parse(JSON.stringify(lists)); };
+    api.setState = function (st) {
+      lists = { cards: st.cards || [], wishlist: st.wishlist || [], tomb: st.tomb || {} };
+      save();
+      if (cbs.cards) cbs.cards(lists.cards.slice());
+      if (cbs.wishlist) cbs.wishlist(lists.wishlist.slice());
+    };
+    return api;
+  }
+  function storageWorks() {
+    try { localStorage.setItem("ygo-test", "1"); localStorage.removeItem("ygo-test"); return true; } catch (e) { return false; }
+  }
+
+  /* ---------- foto ---------- */
+  function resizeImage(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var max = 640, w = im.naturalWidth, h = im.naturalHeight;
+        var s = Math.min(1, max / Math.max(w, h));
+        w = Math.max(1, Math.round(w * s)); h = Math.max(1, Math.round(h * s));
+        var cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        cv.getContext("2d").drawImage(im, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { b ? resolve(b) : reject(new Error("toBlob")); }, "image/jpeg", 0.85);
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); reject(new Error("img")); };
+      im.src = url;
+    });
+  }
+  /* Foto: sulla pagina Claude restano tra gli "asset" della pagina; altrove nel browser (IndexedDB) e, se collegato, nel repository dati. */
+  var idbP = null;
+  function hasIDB() { try { return !!window.indexedDB; } catch (e) { return false; } }
+  function idb() {
+    if (!idbP) idbP = new Promise(function (res, rej) {
+      var rq = indexedDB.open("ygo-photos", 1);
+      rq.onupgradeneeded = function () { rq.result.createObjectStore("p"); };
+      rq.onsuccess = function () { res(rq.result); };
+      rq.onerror = function () { rej(rq.error); };
+    });
+    return idbP;
+  }
+  function idbGet(id) {
+    return idb().then(function (db) {
+      return new Promise(function (res) {
+        var rq = db.transaction("p").objectStore("p").get(id);
+        rq.onsuccess = function () { res(rq.result || null); };
+        rq.onerror = function () { res(null); };
+      });
+    }).catch(function () { return null; });
+  }
+  function idbPut(id, blob) {
+    return idb().then(function (db) {
+      return new Promise(function (res) {
+        var tx = db.transaction("p", "readwrite");
+        tx.objectStore("p").put(blob, id);
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { res(false); };
+        tx.onabort = function () { res(false); };
+      });
+    }).catch(function () { return false; });
+  }
+  function idbDel(id) {
+    return idb().then(function (db) {
+      return new Promise(function (res) {
+        var tx = db.transaction("p", "readwrite");
+        tx.objectStore("p").delete(id);
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { res(false); };
+      });
+    }).catch(function () { return false; });
+  }
+  function newPhotoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function uploadPhoto(file) {
+    if (photoMode === "assets") {
+      return resizeImage(file).then(function (blob) { return assets.upload(blob, { type: "image/jpeg" }); }).then(function (r) { return r.id; });
+    }
+    if (photoMode === "local") {
+      var id = newPhotoId();
+      return resizeImage(file).then(function (blob) {
+        return idbPut(id, blob).then(function (ok) { if (!ok) throw new Error("idb"); return id; });
+      });
+    }
+    return Promise.reject(new Error("no-photos"));
+  }
+  var urlMemo = {};
+  function getPhotoURL(id) {
+    if (urlMemo[id]) return urlMemo[id];
+    var p = idbGet(id).then(function (blob) {
+      if (blob) return URL.createObjectURL(blob);
+      if (!sync.cfg) return null;
+      return gh("/contents/img/" + id + ".jpg?ref=" + encodeURIComponent(sync.cfg.branch), { raw: true })
+        .then(function (r) { return r.blob(); })
+        .then(function (b) {
+          var jb = new Blob([b], { type: "image/jpeg" });
+          idbPut(id, jb);
+          return URL.createObjectURL(jb);
+        }).catch(function () { return null; });
+    }).then(function (u) { if (!u) delete urlMemo[id]; return u; });
+    urlMemo[id] = p;
+    return p;
+  }
+  function imgAttr(id) { return photoMode === "local" ? 'data-pid="' + esc(id) + '"' : 'src="/_blob/' + esc(id) + '"'; }
+  function hydrate() {
+    if (photoMode !== "local") return;
+    Array.prototype.forEach.call(document.querySelectorAll("img[data-pid]:not([src])"), function (im) {
+      if (im.getAttribute("data-busy")) return;
+      im.setAttribute("data-busy", "1");
+      getPhotoURL(im.getAttribute("data-pid")).then(function (u) {
+        if (u) im.src = u;
+        else { var th = im.closest(".thumb"); if (th) th.classList.add("broken"); }
+      });
+    });
+  }
+  function setViewerImg(id) {
+    if (photoMode === "local") getPhotoURL(id).then(function (u) { if (u && viewing) $("v-img").src = u; });
+    else $("v-img").src = "/_blob/" + id;
+  }
+  function photoFail() { say("Non sono riuscito a caricare la foto. Prova con un'altra immagine.", "bad"); }
+  function attachPhoto(kind, id, file) {
+    var it = listFor(kind).filter(function (c) { return c.id === id; })[0];
+    var old = it && it.img;
+    say("Carico la foto…", "");
+    return uploadPhoto(file).then(function (imgId) {
+      return enqueue(function () { return repo.setImg(kind, id, imgId); });
+    }).then(function () {
+      releaseAsset(old);
+      say("Foto salvata.", "ok");
+    }).catch(photoFail);
+  }
+
+  /* ---------- rendering ---------- */
+  function chipsHTML(c) {
+    return '<span class="chip r ' + rcls(c.rarity) + '">' + esc(c.rarity) + '</span>' +
+      '<span class="chip ' + (c.edition === "1st" ? "ed1" : "ed") + '">' + esc(EDSHORT[c.edition] || c.edition) + '</span>' +
+      '<span class="chip lang">' + esc(c.lang) + '</span>';
+  }
+  function thumbHTML(c, kind, interactive) {
+    var alt = esc(c.name || c.code);
+    if (c.img) {
+      return '<button type="button" class="thumb" data-act="view" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Ingrandisci la foto di ' + alt + '"><img ' + imgAttr(c.img) + ' alt="" loading="lazy"></button>';
+    }
+    if (interactive && photoOK && !readOnly) {
+      return '<button type="button" class="thumb empty" data-act="photo" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Aggiungi una foto di ' + alt + '"><span>+ foto</span></button>';
+    }
+    return '<div class="thumb" aria-hidden="true"></div>';
+  }
+  function rowHTML(c, kind, actions) {
+    var qty = Number(c.qty) || 1;
+    var meta = (c.code ? '<span class="code">' + esc(c.code) + '</span>' : "") + (c.set ? "<span>" + esc(c.set) + "</span>" : "");
+    var extra = "";
+    var side = "";
+    var key = kind + ":" + c.id;
+    var sure = pendingDel === key;
+    var rm = '<button type="button" class="rm' + (sure ? " sure" : "") + '" data-act="del" data-kind="' + kind + '" data-id="' + esc(c.id) + '">' + (sure ? "Conferma rimozione" : "Rimuovi") + '</button>';
+    if (kind === "cards") {
+      if (actions && !readOnly) {
+        side = '<div class="side"><div class="step" role="group" aria-label="Copie di ' + esc(c.name || c.code) + '">' +
+          '<button type="button" data-act="dec" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in meno"' + (qty <= 1 ? " disabled" : "") + '>−</button>' +
+          '<output class="' + (qty > 1 ? "dupe" : "") + '">' + qty + '</output>' +
+          '<button type="button" data-act="inc" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in più">+</button></div>' + rm + '</div>';
+      } else {
+        side = '<div class="own" title="Copie possedute">×' + qty + '</div>';
+      }
+    } else {
+      if (actions) {
+        var own = findExact(c, cards);
+        if (own) extra = '<span class="chip warn">Già in raccolta ×' + (Number(own.qty) || 1) + '</span>';
+        else if (related(c, cards).length) extra = '<span class="chip soft">Hai altre versioni</span>';
+        side = readOnly ? "" : '<div class="side"><button type="button" class="btn small" data-act="bought" data-kind="wishlist" data-id="' + esc(c.id) + '">Comprata</button>' + rm + '</div>';
+      } else {
+        side = '<div><span class="chip soft">Desiderata</span></div>';
+      }
+    }
+    return '<li class="row">' + thumbHTML(c, kind, actions) + '<div class="main"><div class="nm">' + esc(c.name || c.code) + '</div>' +
+      (meta ? '<div class="meta">' + meta + '</div>' : "") +
+      '<div class="chips">' + chipsHTML(c) + extra + '</div></div>' + side + '</li>';
+  }
+
+  function renderStats() {
+    var total = 0, sets = {};
+    cards.forEach(function (c) { total += Number(c.qty) || 0; if (c.set) sets[norm(c.set)] = 1; });
+    $("s-copies").textContent = total;
+    $("s-vers").textContent = cards.length;
+    $("s-sets").textContent = Object.keys(sets).length;
+    $("s-wish").textContent = wishes.length;
+    $("tab-col").innerHTML = 'Raccoglitore <span class="n">' + cards.length + "</span>";
+    $("tab-wish").innerHTML = 'Da comprare <span class="n">' + wishes.length + "</span>";
+    $("tab-col").setAttribute("aria-selected", tab === "col");
+    $("tab-wish").setAttribute("aria-selected", tab === "wish");
+  }
+  function fillSelect(sel, first, items, keepValue) {
+    sel.innerHTML = '<option value="">' + esc(first) + "</option>" + items.map(function (it) {
+      return '<option value="' + esc(it[0]) + '">' + esc(it[1]) + "</option>";
+    }).join("");
+    sel.value = items.some(function (it) { return it[0] === keepValue; }) ? keepValue : "";
+  }
+  var lastSetsKey = "";
+  function renderFilterOptions() {
+    var rar = {}, sets = {}, langs = {}, eds = {};
+    cards.forEach(function (c) {
+      rar[c.rarity] = 1; if (c.set) sets[c.set] = 1; langs[c.lang] = 1; eds[c.edition] = 1;
+    });
+    wishes.forEach(function (c) { if (c.set) sets[c.set] = 1; });
+    fillSelect($("fr"), "Tutte le rarità", Object.keys(rar).sort().map(function (r) { return [r, r]; }), $("fr").value);
+    fillSelect($("fe"), "Tutte le edizioni", Object.keys(EDITIONS).filter(function (k) { return eds[k]; }).map(function (k) { return [k, EDITIONS[k]]; }), $("fe").value);
+    fillSelect($("fl"), "Tutte le lingue", LANGS.filter(function (l) { return langs[l[0]]; }), $("fl").value);
+    fillSelect($("fs"), "Tutte le espansioni", Object.keys(sets).sort().map(function (s) { return [s, s]; }), $("fs").value);
+    var key = Object.keys(sets).sort().join("|");
+    if (key !== lastSetsKey) {
+      lastSetsKey = key;
+      $("dl-set").innerHTML = (DB ? DB.sets.slice().sort() : Object.keys(sets).sort()).map(function (s) { return '<option value="' + esc(s) + '">'; }).join("");
+    }
+  }
+  function filtered() {
+    var q = norm($("fq").value), cq = compact($("fq").value);
+    var fr = $("fr").value, fe = $("fe").value, fl = $("fl").value, fs = $("fs").value, fd = $("fd").checked;
+    var rows = cards.filter(function (c) {
+      if (fr && c.rarity !== fr) return false;
+      if (fe && c.edition !== fe) return false;
+      if (fl && c.lang !== fl) return false;
+      if (fs && c.set !== fs) return false;
+      if (fd && (Number(c.qty) || 0) < 2) return false;
+      if (q && compact(c.name).indexOf(cq) < 0 && compact(c.code).indexOf(cq) < 0 && norm(c.set).indexOf(q) < 0) return false;
+      return true;
+    });
+    var o = $("fo").value;
+    rows.sort(function (a, b) {
+      if (o === "recent") return (b.updated || 0) - (a.updated || 0);
+      if (o === "qty") return (Number(b.qty) || 0) - (Number(a.qty) || 0) || byName(a, b);
+      if (o === "set") return (a.set || "￿").localeCompare(b.set || "￿", "it") || (a.code || "").localeCompare(b.code || "") || byName(a, b);
+      return byName(a, b);
+    });
+    return rows;
+  }
+  function renderList() { renderListInner(); hydrate(); }
+  function renderListInner() {
+    var el = $("list");
+    var showCol = tab === "col";
+    $("filters").hidden = !(isLoaded() && showCol && cards.length);
+    $("tools").hidden = !isLoaded();
+    $("import-wrap").hidden = !showCol;
+    var has = listFor(showCol ? "cards" : "wishlist").length > 0;
+    $("export").hidden = !has;
+    $("copycsv").hidden = !(has && !downloads);
+    if (!isLoaded()) { el.innerHTML = '<p class="empty">Carico la raccolta…</p>'; $("count").textContent = ""; return; }
+    if (showCol) {
+      if (!cards.length) {
+        $("count").textContent = "";
+        el.innerHTML = '<p class="empty"><b>Nessuna carta registrata.</b> Scrivi il nome o il codice nel modulo e scegli la carta dai suggerimenti: espansione, rarità e lingua si compilano da soli. Poi indica l\'edizione e, se vuoi, aggiungi una foto.</p>';
+        return;
+      }
+      var rows = filtered();
+      $("count").textContent = rows.length === cards.length ? plural(cards.length, "versione", "versioni") : rows.length + " di " + plural(cards.length, "versione", "versioni");
+      el.innerHTML = rows.length
+        ? '<ul class="rows">' + rows.map(function (c) { return rowHTML(c, "cards", true); }).join("") + "</ul>"
+        : '<p class="empty">Nessuna carta corrisponde ai filtri.</p>';
+    } else {
+      $("count").textContent = wishes.length ? plural(wishes.length, "carta", "carte") : "";
+      if (!wishes.length) {
+        el.innerHTML = '<p class="empty"><b>La lista dei desideri è vuota.</b> Compila il modulo e premi “Aggiungi ai desideri” per le carte che vuoi comprare. Qui vedrai se ne hai già una versione. Quando la compri, premi “Comprata” e finisce nel raccoglitore.</p>';
+        return;
+      }
+      el.innerHTML = '<ul class="rows">' + wishes.slice().sort(byName).map(function (c) { return rowHTML(c, "wishlist", true); }).join("") + "</ul>";
+    }
+  }
+  function renderCheck() { renderCheckInner(); hydrate(); }
+  function renderCheckInner() {
+    var q = $("q").value.trim(), out = $("check-out");
+    if (!isLoaded()) { out.innerHTML = '<p class="hint">Carico la raccolta…</p>'; return; }
+    if (!q) {
+      out.innerHTML = '<p class="hint">' + (cards.length || wishes.length
+        ? "Scrivi il nome o il codice della carta che stai per comprare."
+        : "Appena avrai registrato qualche carta, qui vedrai subito se ce l'hai già.") + "</p>";
+      return;
+    }
+    var m = matches(q, cards), w = matches(q, wishes), html = "";
+    if (!m.length) {
+      html += '<div class="verdict ok"><b>Non ce l\'hai.</b> Nessuna carta nella raccolta corrisponde a “' + esc(q) + '”.</div>';
+    } else {
+      var copies = m.reduce(function (s, c) { return s + (Number(c.qty) || 0); }, 0);
+      html += '<div class="verdict own"><b>Ce l\'hai già.</b> ' + plural(m.length, "versione", "versioni") + ", " + plural(copies, "copia", "copie") +
+        '. Confronta rarità, edizione e lingua prima di comprare.</div><ul class="rows">' +
+        m.map(function (c) { return rowHTML(c, "cards", false); }).join("") + "</ul>";
+    }
+    if (w.length) {
+      html += '<p class="sub">Nella lista dei desideri</p><ul class="rows">' + w.map(function (c) { return rowHTML(c, "wishlist", false); }).join("") + "</ul>";
+    }
+    if (!m.length && !readOnly) html += '<div class="btns"><button type="button" class="btn ghost" id="prefill">Registrala dopo l\'acquisto</button></div>';
+    out.innerHTML = html;
+  }
+
+  /* ---------- modulo ---------- */
+  function readForm() {
+    var qty = parseInt($("f-qty").value, 10);
+    if (!(qty >= 1)) qty = 1;
+    var d = {
+      name: $("f-name").value.trim().replace(/\s+/g, " "),
+      code: $("f-code").value.trim().toUpperCase().replace(/\s+/g, ""),
+      set: $("f-set").value.trim().replace(/\s+/g, " "),
+      rarity: canonRarity($("f-rar").value.trim()),
+      edition: $("f-ed").value,
+      lang: $("f-lang").value,
+      qty: Math.min(qty, 999),
+      img: "",
+      pid: formPid
+    };
+    return d;
+  }
+  function renderDupe() { renderDupeInner(); hydrate(); }
+  function renderDupeInner() {
+    var d = readForm(), box = $("dupe"), btn = $("f-btn");
+    d.pid = resolvePid(d);
+    btn.textContent = "Aggiungi alla raccolta";
+    btn.className = "btn main-btn";
+    if (!d.name && !d.code) { box.hidden = true; box.innerHTML = ""; return; }
+    var ex = d.rarity ? findExact(d, cards) : null;
+    var exW = d.rarity ? findExact(d, wishes) : null;
+    var wnote = exW ? "<span>È anche nella tua lista dei desideri.</span>" : "";
+    var rel = related(d, cards).filter(function (c) { return c !== ex; });
+    if (ex) {
+      var q = Number(ex.qty) || 0;
+      box.className = "note warn";
+      box.innerHTML = '<span class="lbl">Doppione</span><span>Hai già ' + plural(q, "copia", "copie") + " di questa versione (" + esc(ex.rarity) + ", " + esc(EDITIONS[ex.edition]) + ", " + esc(ex.lang) + "). Se la registri, il totale sale a " + (q + d.qty) + ".</span>" + wnote;
+      box.hidden = false;
+      btn.textContent = "Aggiungi copia (totale " + (q + d.qty) + ")";
+      btn.className = "btn warn main-btn";
+    } else if (rel.length) {
+      box.className = "note info";
+      box.innerHTML = '<span class="lbl">Hai già altre versioni</span><ul class="rows">' + rel.slice(0, 6).map(function (c) { return rowHTML(c, "cards", false); }).join("") + "</ul>" +
+        (rel.length > 6 ? "<span>e altre " + (rel.length - 6) + "…</span>" : "") + wnote;
+      box.hidden = false;
+    } else if (d.name.length >= 2) {
+      box.className = "note ok";
+      box.innerHTML = '<span class="lbl">Nuova</span><span>Non hai ancora questa carta.</span>' + wnote;
+      box.hidden = false;
+    } else {
+      box.hidden = true; box.innerHTML = "";
+    }
+  }
+  function say(msg, kind) {
+    var s = $("status");
+    s.textContent = msg; s.className = kind || "";
+    clearTimeout(statusTimer);
+    if (msg) statusTimer = setTimeout(function () { s.textContent = ""; s.className = ""; }, 6000);
+  }
+  function fail(err) {
+    var c = err && err.code;
+    if (c === "quota_exceeded") say("L'archivio è pieno: rimuovi qualche carta prima di aggiungerne altre.", "bad");
+    else if (c === "resource_exhausted") say("Troppe operazioni ravvicinate. Riprova tra qualche secondo.", "bad");
+    else if (c === "invalid_argument") say("Non hai il permesso di modificare questa raccolta.", "bad");
+    else say("Non sono riuscito a salvare. Riprova.", "bad");
+  }
+  function setReadOnly(on) {
+    readOnly = on;
+    ["f-name", "f-code", "f-qty", "f-set", "f-rar", "f-ed", "f-lang", "f-btn", "f-wish", "f-photo-btn", "import-btn"].forEach(function (id) { $(id).disabled = on; });
+    if (on) showBanner("Puoi consultare la raccolta ma non modificarla da questa vista.");
+  }
+  function showBanner(t, info) { var b = $("banner"); b.textContent = t; b.className = "banner" + (info ? " info" : ""); b.hidden = false; }
+  function applyCodeHints() {
+    if (autofillFromCode()) return;
+    var code = $("f-code").value.trim().toUpperCase();
+    var m = /^([A-Z0-9]{2,6})-([A-Z]{1,2})(\d{2,4})$/.exec(code);
+    if (!m) return;
+    if (!langTouched && CODE_LANG[m[2]]) $("f-lang").value = CODE_LANG[m[2]];
+    if (!$("f-set").value.trim()) {
+      var all = cards.concat(wishes);
+      for (var i = 0; i < all.length; i++) {
+        var c = all[i];
+        if (c.set && c.code && c.code.split("-")[0] === m[1]) { $("f-set").value = c.set; break; }
+      }
+    }
+  }
+  function setFormPhoto(file) {
+    formPhoto = file || null;
+    $("f-photo-name").textContent = file ? file.name : "";
+    $("f-photo-clear").hidden = !file;
+    $("f-photo-btn").textContent = file ? "Cambia foto" : "Scegli foto";
+  }
+  function clearFormAfterAdd() {
+    $("f-name").value = ""; $("f-code").value = ""; $("f-qty").value = "1"; $("f-rar").value = "";
+    formPid = 0; hidePicker();
+    setFormPhoto(null);
+    renderDupe();
+    $("f-name").focus();
+  }
+  function validatedForm() {
+    var d = readForm();
+    if (!d.name) { say("Scrivi il nome della carta.", "bad"); $("f-name").focus(); return null; }
+    if (!d.rarity) { say("Scegli la rarità della carta.", "bad"); $("f-rar").focus(); return null; }
+    d.pid = resolvePid(d);
+    return d;
+  }
+  function withPhoto(d) {
+    if (!formPhoto || !photoOK) return Promise.resolve({ d: d, photoFailed: false });
+    return uploadPhoto(formPhoto).then(function (id) { d.img = id; return { d: d, photoFailed: false }; })
+      .catch(function () { return { d: d, photoFailed: true }; });
+  }
+
+  /* ---------- CSV ---------- */
+  var ALIASES = {
+    name: ["nome", "name", "carta", "card", "cardname"],
+    code: ["codice", "code", "setcode", "numero", "number"],
+    set: ["espansione", "set", "setname", "expansion"],
+    rarity: ["rarita", "rarity"],
+    edition: ["edizione", "edition"],
+    lang: ["lingua", "language", "lang"],
+    qty: ["quantita", "quantity", "qty", "copie"]
+  };
+  function parseCSV(t) {
+    t = t.replace(/^﻿/, "");
+    var first = t.split(/\r?\n/, 1)[0] || "";
+    var sep = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ";" : ",";
+    var rows = [], row = [], cur = "", q = false;
+    for (var i = 0; i < t.length; i++) {
+      var ch = t[i];
+      if (q) {
+        if (ch === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+        else cur += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === sep) { row.push(cur); cur = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && t[i + 1] === "\n") i++;
+        row.push(cur); cur = "";
+        if (row.some(function (x) { return x.trim() !== ""; })) rows.push(row);
+        row = [];
+      } else cur += ch;
+    }
+    row.push(cur);
+    if (row.some(function (x) { return x.trim() !== ""; })) rows.push(row);
+    return rows;
+  }
+  function toCSV(kind) {
+    var wish = kind === "wishlist";
+    var head = ["Nome", "Codice", "Espansione", "Rarità", "Edizione", "Lingua"].concat(wish ? [] : ["Quantità"]);
+    var rows = listFor(kind).slice().sort(byName).map(function (c) {
+      var r = [c.name, c.code, c.set, c.rarity, EDITIONS[c.edition] || c.edition, c.lang];
+      if (!wish) r.push(c.qty);
+      return r;
+    });
+    return "﻿" + [head].concat(rows).map(function (r) {
+      return r.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(";");
+    }).join("\r\n");
+  }
+  function parseEdition(v) {
+    var n = norm(v);
+    if (/unl|illimit/.test(n)) return "unl";
+    if (/limited|ltd/.test(n)) return "ltd";
+    if (/1|first|prima/.test(n)) return "1st";
+    return "unl";
+  }
+  function parseLang(v, code) {
+    var u = String(v || "").trim().toUpperCase();
+    if (LANGS.some(function (l) { return l[0] === u; })) return u;
+    var n = norm(v);
+    if (LANG_NAMES[n]) return LANG_NAMES[n];
+    var m = /^[A-Z0-9]{2,6}-([A-Z]{1,2})\d{2,4}$/.exec(String(code || "").toUpperCase());
+    if (m && CODE_LANG[m[1]]) return CODE_LANG[m[1]];
+    return "IT";
+  }
+  function doImport(file) {
+    return file.text().then(function (text) {
+      var rows = parseCSV(text);
+      if (rows.length < 2) { say("Il file è vuoto.", "bad"); return; }
+      var head = rows[0].map(compact), ix = {};
+      Object.keys(ALIASES).forEach(function (k) {
+        ix[k] = head.findIndex(function (h) { return ALIASES[k].indexOf(h) >= 0; });
+      });
+      if (ix.name < 0 || ix.rarity < 0) { say("Servono almeno le colonne Nome e Rarità.", "bad"); return; }
+      var get = function (r, k) { return ix[k] >= 0 ? (r[ix[k]] || "").trim() : ""; };
+      var ok = 0, skip = 0, i = 1;
+      function next() {
+        if (i >= rows.length) {
+          say("Importate " + plural(ok, "riga", "righe") + (skip ? ", " + skip + " saltate" : "") + ".", "ok");
+          return Promise.resolve();
+        }
+        var r = rows[i++];
+        var code = get(r, "code").toUpperCase().replace(/\s+/g, "");
+        var d = {
+          name: get(r, "name"), code: code, set: get(r, "set"), rarity: canonRarity(get(r, "rarity")),
+          edition: parseEdition(get(r, "edition")), lang: parseLang(get(r, "lang"), code),
+          qty: Math.max(1, Math.min(999, parseInt(get(r, "qty"), 10) || 1)), img: "", pid: 0
+        };
+        d.pid = pidOf({ code: d.code, name: d.name });
+        if (!d.name || !d.rarity) { skip++; return next(); }
+        return enqueue(function () { return repo.add(d); }).then(function () {
+          ok++;
+          if (ok % 10 === 0) say("Importo… " + ok + " righe", "");
+          return next();
+        });
+      }
+      return next().catch(function () { say("Importazione interrotta dopo " + plural(ok, "riga", "righe") + ".", "bad"); });
+    });
+  }
+  function saveCSV() {
+    var kind = tab === "col" ? "cards" : "wishlist";
+    if (!listFor(kind).length) return;
+    var day = new Date().toISOString().slice(0, 10);
+    var filename = (kind === "cards" ? "raccolta-ygo-" : "desideri-ygo-") + day + ".csv";
+    var data = toCSV(kind);
+    if (downloads) {
+      downloads.save({ filename: filename, data: data }).then(function () { say("File salvato.", "ok"); })
+        .catch(function (err) { if (!(err && err.code === "declined")) say("Il salvataggio del file non è disponibile qui.", "bad"); });
+      return;
+    }
+    try {
+      var url = URL.createObjectURL(new Blob([data], { type: "text/csv;charset=utf-8" }));
+      var a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      say("Download avviato. Se non parte, usa “Copia CSV”.", "");
+    } catch (e) { say("Il download non è disponibile qui: usa “Copia CSV”.", "bad"); }
+  }
+  function copyCSV() {
+    var kind = tab === "col" ? "cards" : "wishlist";
+    var data = toCSV(kind).replace(/^﻿/, "");
+    var ok = function () { say("CSV copiato. Incollalo in un foglio di calcolo o in un file di testo.", "ok"); };
+    var no = function () { say("Non riesco a copiare in automatico.", "bad"); };
+    try { navigator.clipboard.writeText(data).then(ok, no); } catch (e) { no(); }
+  }
+
+  /* ---------- visualizzatore foto ---------- */
+  function openViewer(kind, id) {
+    var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
+    if (!c || !c.img) return;
+    viewing = { kind: kind, id: id };
+    $("v-title").textContent = c.name || c.code;
+    setViewerImg(c.img);
+    var canEdit = photoOK && !readOnly;
+    $("v-change").hidden = !canEdit;
+    $("v-remove").hidden = !canEdit;
+    $("viewer").hidden = false;
+    $("v-close").focus();
+  }
+  function closeViewer() {
+    viewing = null;
+    $("viewer").hidden = true;
+    $("v-img").removeAttribute("src");
+  }
+
+  /* ---------- eventi ---------- */
+  function onFormChange() { renderDupe(); }
+  ["f-name", "f-code", "f-qty", "f-set", "f-rar", "f-ed", "f-lang"].forEach(function (id) {
+    $(id).addEventListener("input", onFormChange);
+    $(id).addEventListener("change", onFormChange);
+  });
+  $("f-lang").addEventListener("change", function () { langTouched = true; if (picker && !picker.code) { picker.lang = prefLang(); renderPicker(); } });
+  $("f-name").addEventListener("input", function () { formPid = 0; if (picker) hidePicker(); });
+  $("f-code").addEventListener("input", function () { formPid = 0; applyCodeHintsLight(); renderDupe(); });
+  function applyCodeHintsLight() {
+    var code = $("f-code").value.trim().toUpperCase();
+    var m = /^([A-Z0-9]{2,6})-([A-Z]{1,2})(\d{2,4})$/.exec(code);
+    if (m && !langTouched && CODE_LANG[m[2]]) $("f-lang").value = CODE_LANG[m[2]];
+  }
+  $("f-code").addEventListener("change", function () { applyCodeHints(); renderDupe(); });
+
+  Suggest($("f-name"), function (v) {
+    return nameItems(v, function (ci) {
+      $("f-name").value = nameIn(ci, prefLang());
+      formPid = DB.cards[ci][0] || 0;
+      showPicker(ci);
+      renderDupe();
+    });
+  });
+  Suggest($("f-code"), function (v) {
+    return codeItems(v, function (ci, gi, ei) {
+      var g = groupsOf(ci)[gi], e = g.ents[ei];
+      var code = compact(codeOf(g, e)).toUpperCase();
+      applyPrint(ci, gi, ei, -1);
+      if (DB.rs[e.rs].length > 1) { picker = { ci: ci, lang: e.lang, all: false, code: code }; renderPicker(); }
+    });
+  });
+  Suggest($("q"), function (v) {
+    var cq = v.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    var looksCode = /^[A-Za-z0-9]{2,6}-[A-Za-z]{0,2}\d*$/.test(v.trim()) || (/\d/.test(cq) && cq.length >= 4 && /^[A-Z0-9]+$/.test(cq) && v.indexOf(" ") < 0);
+    if (looksCode && codeReady) {
+      var its = codeItems(v, function (ci, gi, ei) {
+        var g = groupsOf(ci)[gi], e = g.ents[ei];
+        $("q").value = codeOf(g, e);
+        renderCheck();
+      });
+      if (its.length) return its;
+    }
+    return nameItems(v, function (ci) {
+      $("q").value = nameIn(ci, prefLang());
+      renderCheck();
+    });
+  });
+
+  $("f-photo-btn").addEventListener("click", function () { $("f-photo").click(); });
+  $("f-photo").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (f) setFormPhoto(f);
+  });
+  $("f-photo-clear").addEventListener("click", function () { setFormPhoto(null); });
+
+  $("f").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (readOnly || !repo) return;
+    var d = validatedForm();
+    if (!d) return;
+    $("f-btn").disabled = true; $("f-wish").disabled = true;
+    withPhoto(d).then(function (r) {
+      return enqueue(function () { return repo.add(r.d); }).then(function (res) {
+        say((res.merged ? "Copia aggiunta: " : "Registrata: ") + d.name + ". Ora ne hai " + res.qty + "." + (r.photoFailed ? " La foto non è stata caricata." : ""), r.photoFailed ? "bad" : "ok");
+        clearFormAfterAdd();
+      });
+    }).catch(fail).then(function () { $("f-btn").disabled = readOnly; $("f-wish").disabled = readOnly; });
+  });
+  $("f-wish").addEventListener("click", function () {
+    if (readOnly || !repo) return;
+    var d = validatedForm();
+    if (!d) return;
+    $("f-btn").disabled = true; $("f-wish").disabled = true;
+    withPhoto(d).then(function (r) {
+      return enqueue(function () { return repo.addWish(r.d); }).then(function (res) {
+        if (res.existed) say("È già nella lista dei desideri: " + d.name + ".", "");
+        else say("Aggiunta ai desideri: " + d.name + "." + (r.photoFailed ? " La foto non è stata caricata." : ""), r.photoFailed ? "bad" : "ok");
+        clearFormAfterAdd();
+      });
+    }).catch(fail).then(function () { $("f-btn").disabled = readOnly; $("f-wish").disabled = readOnly; });
+  });
+
+  $("q").addEventListener("input", renderCheck);
+  $("check-out").addEventListener("click", function (e) {
+    if (!e.target.closest("#prefill")) return;
+    var q = $("q").value.trim();
+    if (/^[A-Za-z0-9]{2,6}-[A-Za-z]{0,2}\d{2,4}$/.test(q)) { $("f-code").value = q.toUpperCase(); $("f-name").value = ""; applyCodeHints(); }
+    else { $("f-name").value = q; $("f-code").value = ""; }
+    renderDupe();
+    $("f-name").focus();
+  });
+
+  ["fq", "fr", "fe", "fl", "fs", "fo", "fd"].forEach(function (id) {
+    $(id).addEventListener("input", renderList);
+    $(id).addEventListener("change", renderList);
+  });
+  function setTab(t) { tab = t; pendingDel = null; renderStats(); renderList(); }
+  $("tab-col").addEventListener("click", function () { setTab("col"); });
+  $("tab-wish").addEventListener("click", function () { setTab("wish"); });
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-act]");
+    if (!b) return;
+    var act = b.getAttribute("data-act"), kind = b.getAttribute("data-kind"), id = b.getAttribute("data-id");
+    var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
+    if (!c) return;
+    if (act === "view") { openViewer(kind, id); return; }
+    if (readOnly || !repo) return;
+    if (act === "photo") { pickTarget = { kind: kind, id: id }; $("pick").click(); return; }
+    var qty = Number(c.qty) || 1;
+    if (act === "inc") enqueue(function () { return repo.setQty(id, Math.min(999, qty + 1)); }).catch(fail);
+    else if (act === "dec" && qty > 1) enqueue(function () { return repo.setQty(id, qty - 1); }).catch(fail);
+    else if (act === "bought") {
+      var d = { name: c.name, code: c.code, set: c.set, rarity: c.rarity, edition: c.edition, lang: c.lang, qty: 1, img: c.img || "", pid: c.pid || 0 };
+      enqueue(function () { return repo.add(d); }).then(function (res) {
+        return enqueue(function () { return repo.remove("wishlist", id); }).then(function () {
+          say("Spostata nel raccoglitore: " + (c.name || c.code) + ". Ora ne hai " + res.qty + ".", "ok");
+        });
+      }).catch(fail);
+    } else if (act === "del") {
+      var key = kind + ":" + id;
+      if (pendingDel === key) {
+        clearTimeout(pendingTimer); pendingDel = null;
+        enqueue(function () { return repo.remove(kind, id); }).then(function () {
+          releaseAsset(c.img);
+          say("Rimossa: " + (c.name || c.code) + ".", "");
+        }).catch(fail);
+      } else {
+        pendingDel = key;
+        clearTimeout(pendingTimer);
+        pendingTimer = setTimeout(function () { pendingDel = null; renderList(); }, 3500);
+        renderList();
+      }
+    }
+  });
+  document.addEventListener("error", function (e) {
+    var t = e.target;
+    if (t && t.tagName === "IMG" && t.closest) {
+      var th = t.closest(".thumb");
+      if (th) th.classList.add("broken");
+    }
+  }, true);
+
+  $("pick").addEventListener("change", function () {
+    var f = this.files && this.files[0], t = pickTarget;
+    this.value = ""; pickTarget = null;
+    if (!f || !t || readOnly || !repo) return;
+    attachPhoto(t.kind, t.id, f);
+  });
+  $("v-close").addEventListener("click", closeViewer);
+  $("viewer").addEventListener("click", function (e) { if (e.target === this) closeViewer(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && viewing) closeViewer(); });
+  $("v-change").addEventListener("click", function () {
+    if (!viewing) return;
+    pickTarget = { kind: viewing.kind, id: viewing.id };
+    closeViewer();
+    $("pick").click();
+  });
+  $("v-remove").addEventListener("click", function () {
+    if (!viewing || readOnly || !repo) return;
+    var v = viewing;
+    var c = listFor(v.kind).filter(function (x) { return x.id === v.id; })[0];
+    var old = c && c.img;
+    closeViewer();
+    enqueue(function () { return repo.setImg(v.kind, v.id, ""); }).then(function () {
+      releaseAsset(old);
+      say("Foto tolta.", "");
+    }).catch(fail);
+  });
+
+  $("export").addEventListener("click", saveCSV);
+  $("copycsv").addEventListener("click", copyCSV);
+  $("import-btn").addEventListener("click", function () { $("import").click(); });
+  $("import").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f || readOnly || !repo) return;
+    doImport(f).catch(function () { say("Non riesco a leggere questo file.", "bad"); });
+  });
+
+  /* ---------- sincronizzazione con un repository GitHub privato ---------- */
+  var SYNC_KEY = "ygo-sync-v1", IMGDEL_KEY = "ygo-img-del";
+  var sync = { cfg: null, busy: false, again: false, timer: null, last: 0 };
+  var FIELDS = ["id", "name", "code", "set", "rarity", "edition", "lang", "qty", "img", "pid", "updated"];
+  function loadCfg() {
+    try { var o = JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); if (o && o.repo && o.token) return o; } catch (e) {}
+    return null;
+  }
+  function saveCfg(c) {
+    try { if (c) localStorage.setItem(SYNC_KEY, JSON.stringify(c)); else localStorage.removeItem(SYNC_KEY); } catch (e) {}
+  }
+  function readDelQueue() { try { var a = JSON.parse(localStorage.getItem(IMGDEL_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function writeDelQueue(a) { try { localStorage.setItem(IMGDEL_KEY, JSON.stringify(a)); } catch (e) {} }
+  function queueImgDelete(id) { var q = readDelQueue(); if (q.indexOf(id) < 0) { q.push(id); writeDelQueue(q); } }
+
+  function b64FromBytes(buf) {
+    var bytes = new Uint8Array(buf), s = "", i, CH = 0x8000;
+    for (i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(s);
+  }
+  function b64FromText(t) { return b64FromBytes(new TextEncoder().encode(t)); }
+  function textFromB64(b) {
+    var bin = atob(String(b).replace(/\s/g, "")), bytes = new Uint8Array(bin.length), i;
+    for (i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function gh(path, opts) {
+    var c = sync.cfg;
+    opts = opts || {};
+    var headers = { Authorization: "Bearer " + c.token, Accept: opts.raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+    if (opts.body) headers["Content-Type"] = "application/json";
+    return fetch("https://api.github.com/repos/" + c.repo + path, {
+      method: opts.method || "GET", headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined, cache: "no-store"
+    }).then(function (r) {
+      if (!r.ok) { var e = new Error("http " + r.status); e.status = r.status; throw e; }
+      return r;
+    }, function () { var e = new Error("rete"); e.status = 0; throw e; });
+  }
+  function ghRef() { return "?ref=" + encodeURIComponent(sync.cfg.branch || "main"); }
+  function ghGetFile(path) {
+    return gh("/contents/" + path + ghRef()).then(function (r) { return r.json(); }).then(function (j) {
+      if (Array.isArray(j)) return { list: j };
+      if (j.content) return { sha: j.sha, text: textFromB64(j.content) };
+      return gh("/contents/" + path + ghRef(), { raw: true }).then(function (r) { return r.text(); }).then(function (t) { return { sha: j.sha, text: t }; });
+    }, function (e) { if (e.status === 404) return null; throw e; });
+  }
+  function ghPut(path, b64, sha, msg) {
+    var body = { message: msg, content: b64, branch: sync.cfg.branch || "main" };
+    if (sha) body.sha = sha;
+    return gh("/contents/" + path, { method: "PUT", body: body });
+  }
+  function ghDelete(path, sha, msg) {
+    return gh("/contents/" + path, { method: "DELETE", body: { message: msg, sha: sha, branch: sync.cfg.branch || "main" } });
+  }
+
+  function normState(st) {
+    function srt(a) { return (a || []).slice().sort(function (x, y) { return x.id < y.id ? -1 : x.id > y.id ? 1 : 0; }).map(function (it) { return FIELDS.map(function (k) { return it[k] == null ? "" : it[k]; }); }); }
+    var tk = Object.keys(st.tomb || {}).sort();
+    return JSON.stringify({ c: srt(st.cards), w: srt(st.wishlist), t: tk.map(function (k) { return [k, st.tomb[k]]; }) });
+  }
+  function mergeStates(a, b) {
+    var tomb = {}, out = { cards: [], wishlist: [], tomb: {} }, now = Date.now(), KEEP = 90 * 86400000;
+    [a.tomb || {}, b.tomb || {}].forEach(function (t) {
+      Object.keys(t).forEach(function (k) { tomb[k] = Math.max(tomb[k] || 0, Number(t[k]) || 0); });
+    });
+    ["cards", "wishlist"].forEach(function (kind) {
+      var m = {};
+      (a[kind] || []).concat(b[kind] || []).forEach(function (it) {
+        var cur = m[it.id];
+        if (!cur || (Number(it.updated) || 0) > (Number(cur.updated) || 0)) m[it.id] = it;
+      });
+      Object.keys(m).forEach(function (id) {
+        var t = tomb[kind + ":" + id];
+        if (t && t >= (Number(m[id].updated) || 0)) return;
+        if (t) delete tomb[kind + ":" + id];
+        out[kind].push(m[id]);
+      });
+    });
+    Object.keys(tomb).forEach(function (k) { if (now - tomb[k] < KEEP) out.tomb[k] = tomb[k]; });
+    return out;
+  }
+
+  function syncImages(merged) {
+    var ids = {};
+    merged.cards.concat(merged.wishlist).forEach(function (c) { if (c.img) ids[c.img] = 1; });
+    return ghGetFile("img").then(function (d) {
+      var remote = {};
+      ((d && d.list) || []).forEach(function (f) { remote[f.name] = f.sha; });
+      var p = Promise.resolve();
+      Object.keys(ids).forEach(function (id) {
+        if (remote[id + ".jpg"]) return;
+        p = p.then(function () {
+          return idbGet(id).then(function (blob) {
+            if (!blob) return;
+            return blob.arrayBuffer().then(function (buf) { return ghPut("img/" + id + ".jpg", b64FromBytes(buf), null, "Foto"); });
+          }).catch(function (e) { if (e && (e.status === 401 || e.status === 403)) throw e; });
+        });
+      });
+      var q = readDelQueue(), left = [];
+      q.forEach(function (id) {
+        if (ids[id]) return;
+        if (!remote[id + ".jpg"]) return;
+        p = p.then(function () {
+          return ghDelete("img/" + id + ".jpg", remote[id + ".jpg"], "Foto rimossa").catch(function () { left.push(id); });
+        });
+      });
+      return p.then(function () { writeDelQueue(left); });
+    });
+  }
+  function doSync(tries) {
+    tries = tries || 0;
+    return ghGetFile("collection.json").then(function (remote) {
+      var rs = { cards: [], wishlist: [], tomb: {} };
+      if (remote && remote.text) {
+        var o;
+        try { o = JSON.parse(remote.text); } catch (e) { var fe = new Error("formato"); fe.status = -1; throw fe; }
+        rs.cards = o.cards || []; rs.wishlist = o.wishlist || []; rs.tomb = o.tomb || {};
+      }
+      var local = repo.getState();
+      var merged = mergeStates(local, rs);
+      if (normState(merged) !== normState(local)) repo.setState(merged);
+      var needPush = !remote || normState(merged) !== normState(rs);
+      return syncImages(merged).then(function () {
+        if (!needPush) return;
+        var text = JSON.stringify({ v: 1, saved: new Date().toISOString(), cards: merged.cards, wishlist: merged.wishlist, tomb: merged.tomb });
+        return ghPut("collection.json", b64FromText(text), remote && remote.sha, "Sincronizzazione raccolta");
+      });
+    }).catch(function (e) {
+      if ((e.status === 409 || e.status === 422) && tries < 2) return doSync(tries + 1);
+      throw e;
+    });
+  }
+  function syncError(e) {
+    var s = e && e.status;
+    if (s === 401) return "Il token non è valido o è scaduto.";
+    if (s === 403) return "Il token non ha il permesso “Contents: Read and write” su questo repository.";
+    if (s === 404) return "Repository o ramo non trovato. Controlla il nome, il ramo e che il token abbia accesso.";
+    if (s === 0) return "GitHub non è raggiungibile. Riprovo più tardi.";
+    if (s === -1) return "Il file collection.json nel repository non è leggibile.";
+    return "Sincronizzazione non riuscita.";
+  }
+  function setSync(t, kind) { var el = $("sync-status"); el.textContent = t; el.className = "sync-status" + (kind ? " " + kind : ""); }
+  function fmtWhen(iso) {
+    try { return new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
+  }
+  function renderSyncUI() {
+    var on = !!sync.cfg;
+    $("sy-now").hidden = !on; $("sy-off").hidden = !on;
+    $("sy-link").textContent = on ? "Aggiorna collegamento" : "Collega e sincronizza";
+    if (on) {
+      $("sy-repo").value = sync.cfg.repo; $("sy-branch").value = sync.cfg.branch || "main";
+      $("sy-token").value = ""; $("sy-token").placeholder = "Token salvato in questo browser";
+      if (!sync.busy) setSync("Collegato a " + sync.cfg.repo + (sync.cfg.last ? ". Ultima sincronizzazione: " + fmtWhen(sync.cfg.last) + "." : "."), sync.cfg.last ? "ok" : "");
+    } else setSync("Non collegato. I dati restano solo su questo dispositivo.", "");
+  }
+  function scheduleSync(ms) {
+    if (!sync.cfg) return;
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(syncNow, ms == null ? 3000 : ms);
+  }
+  function syncNow() {
+    if (!sync.cfg) return Promise.resolve();
+    if (sync.busy) { sync.again = true; return Promise.resolve(); }
+    sync.busy = true;
+    setSync("Sincronizzo…", "");
+    return doSync().then(function () {
+      sync.last = Date.now();
+      sync.cfg.last = new Date().toISOString();
+      saveCfg(sync.cfg);
+      setSync("Sincronizzato il " + fmtWhen(sync.cfg.last) + " con " + sync.cfg.repo + ".", "ok");
+    }).catch(function (e) {
+      setSync(syncError(e), "bad");
+    }).then(function () {
+      sync.busy = false;
+      if (sync.again) { sync.again = false; scheduleSync(1500); }
+    });
+  }
+  function parseRepo(v) {
+    var t = String(v || "").trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/\/+$/, "");
+    return /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(t) ? t : "";
+  }
+  var offTimer = null;
+  function initSync() {
+    if (window.claude) return;
+    $("sync").hidden = false;
+    sync.cfg = loadCfg();
+    repo.onChange = function () { scheduleSync(3000); };
+    renderSyncUI();
+    $("sync-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var r = parseRepo($("sy-repo").value), tok = $("sy-token").value.trim() || (sync.cfg && sync.cfg.token) || "";
+      if (!r) { setSync("Scrivi il repository nella forma nome/repository, per esempio tuonome/ygo-dati.", "bad"); $("sy-repo").focus(); return; }
+      if (!tok) { setSync("Incolla il token di accesso.", "bad"); $("sy-token").focus(); return; }
+      sync.cfg = { repo: r, token: tok, branch: $("sy-branch").value.trim() || "main", last: sync.cfg && sync.cfg.repo === r ? sync.cfg.last : "" };
+      saveCfg(sync.cfg);
+      renderSyncUI();
+      syncNow();
+    });
+    $("sy-now").addEventListener("click", function () { syncNow(); });
+    $("sy-off").addEventListener("click", function () {
+      var b = this;
+      if (!b.classList.contains("warn")) {
+        b.classList.add("warn"); b.textContent = "Conferma scollegamento";
+        clearTimeout(offTimer);
+        offTimer = setTimeout(function () { b.classList.remove("warn"); b.textContent = "Scollega"; }, 4000);
+        return;
+      }
+      clearTimeout(offTimer);
+      b.classList.remove("warn"); b.textContent = "Scollega";
+      clearTimeout(sync.timer);
+      sync.cfg = null; saveCfg(null);
+      renderSyncUI();
+      setSync("Scollegato. Le carte restano su questo dispositivo.", "");
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden && sync.cfg && Date.now() - sync.last > 60000) syncNow();
+    });
+    if (sync.cfg) syncNow();
+  }
+
+  /* ---------- aggiornamento elenco ---------- */
+  function dbMsg(t, kind) { var m = $("db-msg"); m.textContent = t; m.className = "dbnote" + (kind ? " " + kind : ""); }
+  function applyDB(raw) {
+    var rar = {};
+    raw.rar.forEach(function (r) { rar[r] = 1; });
+    RARITIES.forEach(function (r) { rar[r] = 1; });
+    $("dl-rar").innerHTML = Object.keys(rar).sort().map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
+    lastSetsKey = "";
+    buildIndex(raw);
+    renderAll();
+  }
+  $("db-update").addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    dbMsg("Controllo l'ultima versione dell'elenco\u2026", "");
+    fetch("cards.json", { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("http");
+      return r.json();
+    }).then(function (raw) {
+      if (!raw || !raw.cards || !raw.cards.length) throw new Error("vuoto");
+      lastChecked = new Date().toISOString();
+      try { localStorage.setItem("ygo-db-checked", lastChecked); } catch (e) {}
+      var same = DB && raw.date === DB.date && raw.cards.length === DB.cards.length && raw.sets.length === DB.sets.length;
+      if (same) {
+        dbMsg("L'elenco è già l'ultimo disponibile (" + fmtDate(raw.date) + ").", "ok");
+        renderDbNote();
+        return;
+      }
+      var dc = raw.cards.length - (DB ? DB.cards.length : 0), ds = raw.sets.length - (DB ? DB.sets.length : 0);
+      applyDB(raw);
+      dbMsg("Elenco aggiornato al " + fmtDate(raw.date) + ": " + (dc >= 0 ? "+" : "") + plural(dc, "carta", "carte") + ", " + (ds >= 0 ? "+" : "") + plural(ds, "espansione", "espansioni") + ".", "ok");
+    }).catch(function () {
+      dbMsg("Non riesco a controllare ora. Riprova più tardi.", "bad");
+    }).then(function () { btn.disabled = false; });
+  });
+
+  /* ---------- avvio ---------- */
+  function renderAll() {
+    if (viewing && !listFor(viewing.kind).some(function (c) { return c.id === viewing.id && c.img; })) closeViewer();
+    $("photo-row").hidden = !(photoOK && !readOnly);
+    renderStats(); renderFilterOptions(); renderList(); renderCheck(); renderDupe();
+  }
+  function init() {
+    $("f-lang").innerHTML = LANGS.map(function (l) { return '<option value="' + l[0] + '">' + l[0] + " · " + l[1] + "</option>"; }).join("");
+    $("f-lang").value = "IT";
+    $("dl-rar").innerHTML = RARITIES.map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
+    renderDbNote();
+    renderAll();
+  }
+  function normItem(c) {
+    return { id: c.id, name: c.name || "", code: c.code || "", set: c.set || "", rarity: c.rarity || "", edition: c.edition || "unl", lang: c.lang || "IT", qty: Number(c.qty) || 1, img: c.img || "", pid: Number(c.pid) || 0, updated: c.updated || 0 };
+  }
+  function use(name) {
+    try {
+      if (window.claude && typeof window.claude.use === "function") return window.claude.use(name).catch(function () { return null; });
+    } catch (e) {}
+    return Promise.resolve(null);
+  }
+
+  init();
+  loadDB().then(function (raw) {
+    if (raw && raw.cards && raw.cards.length) {
+      var rar = {};
+      raw.rar.forEach(function (r) { rar[r] = 1; });
+      RARITIES.forEach(function (r) { rar[r] = 1; });
+      $("dl-rar").innerHTML = Object.keys(rar).sort().map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
+      buildIndex(raw);
+      renderAll();
+    } else {
+      dbState = "none";
+      renderDbNote();
+    }
+  });
+  Promise.all([use("db"), use("user"), use("downloads"), use("assets")]).then(function (r) {
+    var db = r[0], user = r[1];
+    downloads = r[2];
+    assets = r[3];
+    photoMode = assets ? "assets" : ((!db && hasIDB()) ? "local" : "");
+    photoOK = !!photoMode;
+    if (db) {
+      repo = makeDbRepo(db);
+    } else {
+      var persist = storageWorks();
+      repo = makeLocalRepo(persist);
+      showBanner(persist
+        ? "I dati sono salvati in questo browser, su questo dispositivo. Esporta il CSV ogni tanto per averne una copia di sicurezza."
+        : "Il browser non permette di salvare i dati: restano solo finché la pagina è aperta. Esporta il CSV prima di chiuderla.", persist);
+    }
+    var onErr = function () {
+      loadedC = true; loadedW = true;
+      showBanner("Non riesco a leggere la raccolta. Ricarica la pagina.");
+      renderAll();
+    };
+    repo.sub("cards", function (list) { cards = list.map(normItem); loadedC = true; renderAll(); }, onErr);
+    repo.sub("wishlist", function (list) { wishes = list.map(normItem); loadedW = true; renderAll(); }, onErr);
+    if (!db) initSync();
+    if (user && db) {
+      user.can("data.write").then(function (ok) { if (ok === false) setReadOnly(true); renderAll(); }).catch(function () {});
+    }
+    renderAll();
+  });
+})();
+</script>
