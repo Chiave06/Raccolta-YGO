@@ -1,0 +1,35 @@
+name: Aggiorna elenco carte
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"   # ogni lunedì mattina
+  workflow_dispatch:        # oppure a mano dalla scheda Actions
+
+permissions:
+  contents: write
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scarica i dati delle carte
+        run: |
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/DawnbrandBots/yaml-yugi "$RUNNER_TEMP/yaml-yugi"
+          echo "DATA_ARCHIVIO=$(git -C "$RUNNER_TEMP/yaml-yugi" log -1 --format=%cd --date=short)" >> "$GITHUB_ENV"
+
+      - name: Genera cards.json
+        run: python3 tools/make_db.py "$RUNNER_TEMP/yaml-yugi/data/cards" cards.json "$DATA_ARCHIVIO"
+
+      - name: Salva solo se ci sono novità
+        run: |
+          if git diff --quiet -- cards.json; then
+            echo "Nessuna novità."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add cards.json
+            git commit -m "Aggiorna elenco carte ($DATA_ARCHIVIO)"
+            git push
+          fi
