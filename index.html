@@ -105,6 +105,9 @@ button, input, select { font: inherit; color: inherit; }
 
 header { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
 .tag { color: var(--muted); margin: 6px 0 0; max-width: 46ch; }
+.games { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.games a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--raised); color: var(--ink); text-decoration: none; font-weight: 600; }
+.games a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .uilang select { min-height: 36px; padding: 0 8px; width: auto; }
 .stats { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 14px; }
 .stats b { font: 700 22px/1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 5px; }
@@ -288,9 +291,10 @@ button.thumb { cursor: pointer; }
 </style>
 
 <div class="wrap">
+  <nav class="games" id="games" data-notr aria-label="Giochi"></nav>
   <header>
     <div>
-      <h1>Raccolta YGO</h1>
+      <h1 id="h-title">Raccolta YGO</h1>
       <p class="tag">Tutte le tue carte Yu-Gi-Oh! con immagini, rarità, espansione, edizione e lingua. Controlla qui prima di comprare.</p>
     </div>
     <div class="uilang"><label for="ui-lang" class="sr">Lingua del sito</label><select id="ui-lang" data-notr><option value="it">Italiano</option><option value="en">English</option></select></div>
@@ -517,6 +521,7 @@ button.thumb { cursor: pointer; }
 </div>
 
 
+<script>window.GAME_CFG={"nav": [["./", "Yu-Gi-Oh!", "ygo"], ["pokemon.html", "Pokémon", "pkm"], ["magic.html", "Magic", "mtg"]]};</script>
 <script>
 (function () {
   "use strict";
@@ -533,14 +538,27 @@ button.thumb { cursor: pointer; }
   var words = function (s) { return norm(s).replace(/[^a-z0-9]+/g, " ").trim(); };
   var slug = function (s) { return norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); };
 
-  var RARITIES = ["Common", "Rare", "Super Rare", "Ultra Rare", "Secret Rare", "Ultimate Rare", "Ghost Rare", "Gold Rare", "Premium Gold Rare", "Platinum Rare", "Starlight Rare", "Collector's Rare", "Prismatic Secret Rare", "Quarter Century Secret Rare", "Extra Secret Rare", "Platinum Secret Rare", "10000 Secret Rare", "Short Print", "Super Short Print", "Parallel Rare", "Super Parallel Rare", "Ultra Parallel Rare", "Mosaic Rare", "Shatterfoil Rare", "Starfoil Rare", "Millennium Rare", "Pharaoh's Rare", "Ghost/Gold Rare"];
-  var LANGS = [["IT", "Italiano"], ["EN", "Inglese"], ["DE", "Tedesco"], ["FR", "Francese"], ["ES", "Spagnolo"], ["PT", "Portoghese"], ["JP", "Giapponese"], ["KR", "Coreano"], ["SC", "Cinese"], ["AE", "Inglese asiatico"]];
-  var EDITIONS = { "1st": "1ª Edizione", "unl": "Unlimited", "ltd": "Limited" };
-  var EDSHORT = { "1st": "1ª ED.", "unl": "UNLIMITED", "ltd": "LIMITED" };
-  var CODE_LANG = { EN: "EN", E: "EN", DE: "DE", G: "DE", FR: "FR", F: "FR", IT: "IT", I: "IT", ES: "ES", S: "ES", SP: "ES", PT: "PT", P: "PT", JP: "JP", J: "JP", KR: "KR", K: "KR", SC: "SC", AE: "AE" };
-  var LANG_NAMES = { italiano: "IT", inglese: "EN", english: "EN", tedesco: "DE", german: "DE", francese: "FR", french: "FR", spagnolo: "ES", spanish: "ES", portoghese: "PT", portuguese: "PT", giapponese: "JP", japanese: "JP", coreano: "KR", korean: "KR", cinese: "SC", chinese: "SC" };
-  var DEFMARK = { EN: "EN", IT: "IT", DE: "DE", FR: "FR", ES: "SP", PT: "PT", JP: "JP", KR: "KR", SC: "SC" };
-  var NAMEIDX = { EN: 0, IT: 1, DE: 2, FR: 3, ES: 4, PT: 5 };
+  var G = window.GAME_CFG || {};
+  var RARITIES = G.rarities || ["Common", "Rare", "Super Rare", "Ultra Rare", "Secret Rare", "Ultimate Rare", "Ghost Rare", "Gold Rare", "Premium Gold Rare", "Platinum Rare", "Starlight Rare", "Collector's Rare", "Prismatic Secret Rare", "Quarter Century Secret Rare", "Extra Secret Rare", "Platinum Secret Rare", "10000 Secret Rare", "Short Print", "Super Short Print", "Parallel Rare", "Super Parallel Rare", "Ultra Parallel Rare", "Mosaic Rare", "Shatterfoil Rare", "Starfoil Rare", "Millennium Rare", "Pharaoh's Rare", "Ghost/Gold Rare"];
+  var LANGS = G.langs || [["IT", "Italiano"], ["EN", "Inglese"], ["DE", "Tedesco"], ["FR", "Francese"], ["ES", "Spagnolo"], ["PT", "Portoghese"], ["JP", "Giapponese"], ["KR", "Coreano"], ["SC", "Cinese"], ["AE", "Inglese asiatico"]];
+  var EDITIONS = G.editions || { "1st": "1ª Edizione", "unl": "Unlimited", "ltd": "Limited" };
+  var EDSHORT = G.edshort || { "1st": "1ª ED.", "unl": "UNLIMITED", "ltd": "LIMITED" };
+  var CODE_LANG = G.codeLang || { EN: "EN", E: "EN", DE: "DE", G: "DE", FR: "FR", F: "FR", IT: "IT", I: "IT", ES: "ES", S: "ES", SP: "ES", PT: "PT", P: "PT", JP: "JP", J: "JP", KR: "KR", K: "KR", SC: "SC", AE: "AE" };
+  var LANG_NAMES = G.langNames || { italiano: "IT", inglese: "EN", english: "EN", tedesco: "DE", german: "DE", francese: "FR", french: "FR", spagnolo: "ES", spanish: "ES", portoghese: "PT", portuguese: "PT", giapponese: "JP", japanese: "JP", coreano: "KR", korean: "KR", cinese: "SC", chinese: "SC" };
+  var DEFMARK = G.defmark || { EN: "EN", IT: "IT", DE: "DE", FR: "FR", ES: "SP", PT: "PT", JP: "JP", KR: "KR", SC: "SC" };
+  var NAMEIDX = G.nameidx || { EN: 0, IT: 1, DE: 2, FR: 3, ES: 4, PT: 5 };
+
+  (function applyGame() {
+    var T = G.text || {}, set = function (id, k) { if (T[k] != null && $(id)) $(id).setAttribute("placeholder", T[k]); };
+    if (T.title) { document.title = T.title; $("h-title").textContent = T.title; }
+    if (T.tag) document.querySelector(".tag").textContent = T.tag;
+    set("f-name", "name"); set("f-code", "code"); set("f-set", "set"); set("f-rar", "rar"); set("q", "q");
+    if (T.edLabel) { var l1 = document.querySelector('label[for="f-ed"]'), l2 = document.querySelector('label[for="ed-ed"]'); if (l1) l1.textContent = T.edLabel; if (l2) l2.textContent = T.edLabel; }
+    var opts = Object.keys(EDITIONS).map(function (k) { return '<option value="' + k + '"' + (k === "unl" ? " selected" : "") + ">" + EDITIONS[k] + "</option>"; }).join("");
+    $("f-ed").innerHTML = opts; $("ed-ed").innerHTML = opts;
+    var nav = G.nav || [["index.html", "Yu-Gi-Oh!", "ygo"], ["pokemon.html", "Pokémon", "pkm"], ["magic.html", "Magic", "mtg"]], cur = G.id || "ygo";
+    $("games").innerHTML = nav.map(function (n) { return '<a href="' + n[0] + '"' + (n[2] === cur ? ' aria-current="page"' : "") + ">" + n[1] + "</a>"; }).join("");
+  })();
 
   var cards = [];
   var wishes = [];
@@ -630,10 +648,10 @@ button.thumb { cursor: pointer; }
   var decoded = {};
   var dbMode = "none";           // none | inline | fetch
   var indexGen = 0, lastChecked = "";
-  var LORDER = ["EN", "IT", "DE", "FR", "ES", "PT", "JP", "KR", "SC"];
+  var LORDER = G.lorder || ["EN", "IT", "DE", "FR", "ES", "PT", "JP", "KR", "SC"];
 
   function parseEnt(s) {
-    var lang = s.slice(0, 2), r = s.slice(2), marker = DEFMARK[lang] || lang;
+    var lang = s.slice(0, 2), r = s.slice(2), marker = Object.prototype.hasOwnProperty.call(DEFMARK, lang) ? DEFMARK[lang] : lang;
     if (r.charAt(0) === "~") { var p = r.split("~"); marker = p[1]; r = p[2]; }
     return { lang: lang, marker: marker, rs: +r };
   }
@@ -641,7 +659,7 @@ button.thumb { cursor: pointer; }
   function groupsOf(ci) {
     if (decoded[ci]) return decoded[ci];
     var out = DB.cards[ci][2].map(function (g) {
-      return { si: g[0], prefix: g[1], number: g[2], ents: g[3].split(" ").map(parseEnt) };
+      return { si: g[0], prefix: g[1], number: g[2], ents: g[3].split(" ").map(parseEnt), pid: g[4] || 0 };
     });
     decoded[ci] = out;
     return out;
@@ -687,6 +705,7 @@ button.thumb { cursor: pointer; }
       for (k = 0; k < c[2].length; k++) wsum += c[2][k][3].split(" ").length;
       nameW.push(wsum);
       if (c[0]) pidMap.set(c[0], i);
+      for (k = 0; k < c[2].length; k++) if (c[2][k][4]) pidMap.set(c[2][k][4], i);
     }
     dbState = "ready";
     codeMap = new Map();
@@ -720,7 +739,7 @@ button.thumb { cursor: pointer; }
     return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(LOC(), { day: "numeric", month: "long", year: "numeric" });
   }
   function readChecked() {
-    try { return localStorage.getItem("ygo-db-checked") || lastChecked; } catch (e) { return lastChecked; }
+    try { return localStorage.getItem((G.id || "ygo") + "-db-checked") || lastChecked; } catch (e) { return lastChecked; }
   }
   function renderDbNote() {
     var el = $("db-note");
@@ -734,7 +753,7 @@ button.thumb { cursor: pointer; }
         (when ? " Ultimo controllo: " + when + "." : "") +
         (dbMode === "inline" ? " Per aggiornarlo sostituisci questo file con la versione nuova." : "");
     } else if (dbState === "loading") el.textContent = "Carico l'elenco delle carte per i suggerimenti\u2026";
-    else el.textContent = dbMode === "fetch" ? "Elenco carte non disponibile." : "";
+    else el.textContent = dbMode === "fetch" ? ("Elenco carte non disponibile." + (G.id && G.id !== "ygo" ? " Puoi inserire le carte a mano. L'elenco si crea con l'aggiornamento automatico su GitHub." : "")) : "";
   }
   function loadDB() {
     if (window.YGO_NODB) return Promise.resolve(null);
@@ -744,7 +763,7 @@ button.thumb { cursor: pointer; }
       try { return Promise.resolve(JSON.parse(el.textContent)); } catch (e) { return Promise.resolve(null); }
     }
     dbMode = "fetch";
-    return fetch("cards.json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    return fetch(G.dbFile || "cards.json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
 
   function scoreName(s, nq, toks) {
@@ -810,6 +829,8 @@ button.thumb { cursor: pointer; }
   }
   function pidOf(c) {
     if (c.pid) return c.pid;
+    var cc0 = (c.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (cc0 && codeReady && codeMap.has(cc0)) { var j0 = codeMap.get(cc0), g0 = DB.cards[cIdx[j0]][2][gIdx[j0]]; if (g0[4]) return g0[4]; }
     var cand = candidatesOf(c);
     return cand.length === 1 ? (DB.cards[cand[0]][0] || 0) : 0;
   }
@@ -935,7 +956,7 @@ button.thumb { cursor: pointer; }
     if (ri >= 0 && rids[ri] != null) $("f-rar").value = canonRarity(DB.rar[rids[ri]]);
     else if (rids.length === 1) $("f-rar").value = canonRarity(DB.rar[rids[0]]);
     else $("f-rar").value = "";
-    formPid = DB.cards[ci][0] || 0;
+    formPid = g.pid || DB.cards[ci][0] || 0;
     hidePicker();
     renderDupe();
     if (!$("f-rar").value) $("f-rar").focus(); else $("f-ed").focus();
@@ -999,7 +1020,7 @@ button.thumb { cursor: pointer; }
     var cc = $("f-code").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!cc || !codeMap.has(cc)) return false;
     var i = codeMap.get(cc), ci = cIdx[i], g = groupsOf(ci)[gIdx[i]], e = g.ents[eIdx[i]], rids = DB.rs[e.rs];
-    formPid = DB.cards[ci][0] || 0;
+    formPid = g.pid || DB.cards[ci][0] || 0;
     if (!$("f-name").value.trim()) $("f-name").value = showName(ci, e.lang);
     if (!$("f-set").value.trim()) $("f-set").value = DB.sets[g.si];
     if (!langTouched) setLang(e.lang);
@@ -1015,7 +1036,7 @@ button.thumb { cursor: pointer; }
     return p;
   }
   function makeDbRepo(db) {
-    var cols = { cards: db.collection("cards"), wishlist: db.collection("wishlist") };
+    var cols = { cards: db.collection(G.colCards || "cards"), wishlist: db.collection(G.colWish || "wishlist") };
     return {
       sub: function (kind, cb, err) {
         return cols[kind].onSnapshot(function (s) {
@@ -1072,7 +1093,7 @@ button.thumb { cursor: pointer; }
     };
   }
   /* Salvataggio nel browser (localStorage) se disponibile, altrimenti solo in memoria. */
-  var LS_KEY = "ygo-raccolta-v1";
+  var LS_KEY = G.ls || "ygo-raccolta-v1";
   function makeLocalRepo(persist) {
     var lists = { cards: [], wishlist: [], tomb: {} }, cbs = {}, api = {};
     if (persist) {
@@ -1287,12 +1308,19 @@ button.thumb { cursor: pointer; }
       '<span class="chip ' + (c.edition === "1st" ? "ed1" : "ed") + '">' + esc(EDSHORT[c.edition] || c.edition) + '</span>' +
       '<span class="chip lang">' + esc(c.lang) + '</span>';
   }
+  function artURL(pid) {
+    var p = String(pid);
+    if (G.art === "pkm") { var i = p.indexOf("-"); return i > 0 ? "https://images.pokemontcg.io/" + encodeURIComponent(p.slice(0, i)) + "/" + encodeURIComponent(p.slice(i + 1)) + ".png" : ""; }
+    if (G.art === "mtg") return /^[0-9a-f]{8}-/.test(p) ? "https://cards.scryfall.io/small/front/" + p[0] + "/" + p[1] + "/" + p + ".jpg" : "";
+    return "https://images.ygoprodeck.com/images/cards_small/" + encodeURIComponent(p) + ".jpg";
+  }
   function thumbHTML(c, kind, interactive) {
     var alt = esc(dispName(c));
     if (c.img) {
       return '<button type="button" class="thumb" data-act="view" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Ingrandisci la foto di ' + alt + '"><img ' + imgAttr(c.img) + ' alt="" loading="lazy"></button>';
     }
-    var art = c.pid ? '<img class="art" src="https://images.ygoprodeck.com/images/cards_small/' + encodeURIComponent(c.pid) + '.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">' : "";
+    var aurl = c.pid ? artURL(c.pid) : "";
+    var art = aurl ? '<img class="art" src="' + esc(aurl) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : "";
     if (art && !(interactive && PHOTO_EDIT && photoOK && !readOnly)) return '<div class="thumb off empty" aria-hidden="true"><span>—</span>' + art + '</div>';
     if (art) return '<button type="button" class="thumb empty off" data-act="photo" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Aggiungi una tua foto di ' + alt + '" title="Immagine ufficiale: clicca per usare una tua foto"><span>+ foto</span>' + art + '</button>';
     if (interactive && PHOTO_EDIT && photoOK && !readOnly) {
@@ -1602,6 +1630,10 @@ button.thumb { cursor: pointer; }
   }
   function parseEdition(v) {
     var n = norm(v);
+    for (var ek in EDITIONS) if (n === norm(EDITIONS[ek]) || n === norm(EDSHORT[ek])) return ek;
+    if (/non ?-?foil/.test(n)) return "unl";
+    if (/etched|shadowless/.test(n)) return "ltd";
+    if (G.id === "mtg" && /foil/.test(n)) return "1st";
     if (/unl|illimit/.test(n)) return "unl";
     if (/limited|ltd/.test(n)) return "ltd";
     if (/1|first|prima/.test(n)) return "1st";
@@ -1654,7 +1686,7 @@ button.thumb { cursor: pointer; }
     var kind = tab === "col" ? "cards" : "wishlist";
     if (!listFor(kind).length) return;
     var day = new Date().toISOString().slice(0, 10);
-    var filename = (kind === "cards" ? "raccolta-ygo-" : "desideri-ygo-") + day + ".csv";
+    var filename = (kind === "cards" ? "raccolta-" + (G.csv || "ygo") + "-" : "desideri-" + (G.csv || "ygo") + "-") + day + ".csv";
     var data = toCSV(kind);
     if (downloads) {
       downloads.save({ filename: filename, data: data }).then(function () { say("File salvato.", "ok"); })
@@ -2065,7 +2097,7 @@ button.thumb { cursor: pointer; }
   }
   function doSync(tries) {
     tries = tries || 0;
-    return ghGetFile("collection.json").then(function (remote) {
+    return ghGetFile(G.collFile || "collection.json").then(function (remote) {
       var rs = { cards: [], wishlist: [], tomb: {} };
       if (remote && remote.text) {
         var o;
@@ -2079,7 +2111,7 @@ button.thumb { cursor: pointer; }
       return syncImages(merged).then(function () {
         if (!needPush) return;
         var text = JSON.stringify({ v: 1, saved: new Date().toISOString(), cards: merged.cards, wishlist: merged.wishlist, tomb: merged.tomb });
-        return ghPut("collection.json", b64FromText(text), remote && remote.sha, "Sincronizzazione raccolta");
+        return ghPut(G.collFile || "collection.json", b64FromText(text), remote && remote.sha, "Sincronizzazione raccolta");
       });
     }).catch(function (e) {
       if ((e.status === 409 || e.status === 422) && tries < 2) return doSync(tries + 1);
@@ -2189,13 +2221,13 @@ button.thumb { cursor: pointer; }
     var btn = this;
     btn.disabled = true;
     dbMsg("Controllo l'ultima versione dell'elenco\u2026", "");
-    fetch("cards.json", { cache: "no-store" }).then(function (r) {
+    fetch(G.dbFile || "cards.json", { cache: "no-store" }).then(function (r) {
       if (!r.ok) throw new Error("http");
       return r.json();
     }).then(function (raw) {
       if (!raw || !raw.cards || !raw.cards.length) throw new Error("vuoto");
       lastChecked = new Date().toISOString();
-      try { localStorage.setItem("ygo-db-checked", lastChecked); } catch (e) {}
+      try { localStorage.setItem((G.id || "ygo") + "-db-checked", lastChecked); } catch (e) {}
       var same = DB && raw.date === DB.date && raw.cards.length === DB.cards.length && raw.sets.length === DB.sets.length;
       if (same) {
         dbMsg("L'elenco è già l'ultimo disponibile (" + fmtDate(raw.date) + ").", "ok");
@@ -2219,14 +2251,14 @@ button.thumb { cursor: pointer; }
   }
   function init() {
     $("f-lang").innerHTML = LANGS.map(function (l) { return '<option value="' + l[0] + '">' + l[0] + " · " + l[1] + "</option>"; }).join("");
-    $("f-lang").value = "IT";
+    $("f-lang").value = G.defLang || "IT";
     $("ed-lang").innerHTML = $("f-lang").innerHTML;
     $("dl-rar").innerHTML = RARITIES.map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
     renderDbNote();
     renderAll();
   }
   function normItem(c) {
-    return { id: c.id, name: c.name || "", code: c.code || "", set: c.set || "", rarity: c.rarity || "", edition: c.edition || "unl", lang: c.lang || "IT", qty: Number(c.qty) || 1, img: c.img || "", pid: Number(c.pid) || 0, updated: c.updated || 0 };
+    return { id: c.id, name: c.name || "", code: c.code || "", set: c.set || "", rarity: c.rarity || "", edition: c.edition || "unl", lang: c.lang || "IT", qty: Number(c.qty) || 1, img: c.img || "", pid: (typeof c.pid === "string" && c.pid) ? c.pid : (Number(c.pid) || 0), updated: c.updated || 0 };
   }
   function use(name) {
     try {
@@ -2340,6 +2372,7 @@ button.thumb { cursor: pointer; }
     "Non riesco a leggere la raccolta. Ricarica la pagina.": "Can't read the collection. Reload the page.",
     "Nessuna stampa trovata.": "No print found."
   };
+  if (G.en) Object.keys(G.en).forEach(function (k) { EN[k] = G.en[k]; });
   var ENW = { copia: ["copy", "copies"], copie: ["copy", "copies"], versione: ["version", "versions"], versioni: ["version", "versions"], carta: ["card", "cards"], carte: ["card", "cards"], espansione: ["set", "sets"], espansioni: ["set", "sets"], riga: ["row", "rows"], righe: ["row", "rows"], stampa: ["print", "prints"], stampe: ["print", "prints"] };
   function nw(n, w) { var a = ENW[w] || [w, w]; return n + " " + (+n === 1 ? a[0] : a[1]); }
   var PAT = [
