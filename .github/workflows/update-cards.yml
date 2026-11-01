@@ -37,9 +37,10 @@ jobs:
         run: |
           H1='User-Agent: raccolta-tcg/1.0'
           H2='Accept: application/json'
-          INFO=$(curl -fsS -H "$H1" -H "$H2" https://api.scryfall.com/bulk-data/default-cards)
-          URL=$(echo "$INFO" | python3 -c 'import sys,json; print(json.load(sys.stdin)["download_uri"])')
-          D=$(echo "$INFO" | python3 -c 'import sys,json; print(json.load(sys.stdin)["updated_at"][:10])')
+          curl -fsS -H "$H1" -H "$H2" -o "$RUNNER_TEMP/bulk.json" https://api.scryfall.com/bulk-data
+          URL=$(python3 -c 'import sys,json; d=json.load(open(sys.argv[1]))["data"]; print([x for x in d if x["type"]=="default_cards"][0]["download_uri"])' "$RUNNER_TEMP/bulk.json")
+          D=$(python3 -c 'import sys,json; d=json.load(open(sys.argv[1]))["data"]; print([x for x in d if x["type"]=="default_cards"][0]["updated_at"][:10])' "$RUNNER_TEMP/bulk.json")
+          echo "Scarico $URL"
           curl -fsS -H "$H1" -H "$H2" -o "$RUNNER_TEMP/scryfall.json" "$URL"
           python3 tools/make_mtg_db.py "$RUNNER_TEMP/scryfall.json" magic.json "$D"
 
