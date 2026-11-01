@@ -1,4 +1,4 @@
-name: Aggiorna elenco carte
+name: Aggiorna elenchi carte
 
 on:
   schedule:
@@ -14,22 +14,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Scarica i dati delle carte
+      # --- Yu-Gi-Oh! ---
+      - name: Yu-Gi-Oh! - scarica e genera cards.json
+        continue-on-error: true
         run: |
           GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/DawnbrandBots/yaml-yugi "$RUNNER_TEMP/yaml-yugi"
-          echo "DATA_ARCHIVIO=$(git -C "$RUNNER_TEMP/yaml-yugi" log -1 --format=%cd --date=short)" >> "$GITHUB_ENV"
+          D=$(git -C "$RUNNER_TEMP/yaml-yugi" log -1 --format=%cd --date=short)
+          python3 tools/make_db.py "$RUNNER_TEMP/yaml-yugi/data/cards" cards.json "$D"
+          echo "DATA_YGO=$D" >> "$GITHUB_ENV"
 
-      - name: Genera cards.json
-        run: python3 tools/make_db.py "$RUNNER_TEMP/yaml-yugi/data/cards" cards.json "$DATA_ARCHIVIO"
+      # --- Pokémon ---
+      - name: Pokémon - scarica e genera pokemon.json
+        continue-on-error: true
+        run: |
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/PokemonTCG/pokemon-tcg-data "$RUNNER_TEMP/pkm"
+          D=$(git -C "$RUNNER_TEMP/pkm" log -1 --format=%cd --date=short)
+          python3 tools/make_pkm_db.py "$RUNNER_TEMP/pkm" pokemon.json "$D"
+
+      # --- Magic (dati Scryfall, file "Default Cards") ---
+      - name: Magic - scarica e genera magic.json
+        continue-on-error: true
+        run: |
+          H1='User-Agent: raccolta-tcg/1.0'
+          H2='Accept: application/json'
+          INFO=$(curl -fsS -H "$H1" -H "$H2" https://api.scryfall.com/bulk-data/default-cards)
+          URL=$(echo "$INFO" | python3 -c 'import sys,json; print(json.load(sys.stdin)["download_uri"])')
+          D=$(echo "$INFO" | python3 -c 'import sys,json; print(json.load(sys.stdin)["updated_at"][:10])')
+          curl -fsS -H "$H1" -H "$H2" -o "$RUNNER_TEMP/scryfall.json" "$URL"
+          python3 tools/make_mtg_db.py "$RUNNER_TEMP/scryfall.json" magic.json "$D"
 
       - name: Salva solo se ci sono novità
         run: |
-          if git diff --quiet -- cards.json; then
+          for f in cards.json pokemon.json magic.json; do [ -f "$f" ] && git add "$f"; done
+          if git diff --cached --quiet; then
             echo "Nessuna novità."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add cards.json
-            git commit -m "Aggiorna elenco carte ($DATA_ARCHIVIO)"
+            git commit -m "Aggiorna elenchi carte ($(date +%F))"
             git push
           fi
