@@ -105,6 +105,7 @@ button, input, select { font: inherit; color: inherit; }
 
 header { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
 .tag { color: var(--muted); margin: 6px 0 0; max-width: 46ch; }
+.uilang select { min-height: 36px; padding: 0 8px; width: auto; }
 .stats { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 14px; }
 .stats b { font: 700 22px/1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 5px; }
 
@@ -215,6 +216,7 @@ input::placeholder { color: var(--muted); opacity: .8; }
 .row:first-child { border-top: 0; }
 .main { min-width: 0; display: grid; gap: 6px; }
 .nm { font: 600 19px/1.2 var(--f-display); overflow-wrap: anywhere; }
+.alt { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
 .meta { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 2px 10px; }
 .code { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -235,6 +237,9 @@ button.thumb { cursor: pointer; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb.empty { border-style: dashed; color: var(--muted); font: 600 11px/1.2 var(--f-body); text-align: center; }
 .thumb.broken img { display: none; }
+.thumb.off { position: relative; }
+.thumb.off img { position: absolute; inset: 0; }
+.thumb.off.empty { border-style: solid; }
 
 .side { display: grid; gap: 6px; justify-items: end; }
 .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
@@ -244,6 +249,12 @@ button.thumb { cursor: pointer; }
 .step output.dupe { color: var(--gold); }
 .rm { border: 0; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 4px; min-height: 32px; }
 .rm.sure { color: var(--bad); font-weight: 600; }
+.rm[data-act="edit"] { color: var(--accent); font-weight: 600; }
+.act { display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: flex-end; }
+.edbox { justify-items: stretch; width: min(92vw, 440px); max-height: 92vh; overflow: auto; text-align: left; }
+.vbox.edbox h3 { text-align: left; }
+.edwarn { margin: 0; color: var(--bad); font-size: 14px; }
+.edwarn:empty { display: none; }
 .own { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--gold); padding-top: 2px; }
 @media (max-width: 520px) {
   .row { grid-template-columns: auto minmax(0, 1fr); }
@@ -280,8 +291,9 @@ button.thumb { cursor: pointer; }
   <header>
     <div>
       <h1>Raccolta YGO</h1>
-      <p class="tag">Tutte le tue carte Yu-Gi-Oh! con foto, rarità, espansione, edizione e lingua. Controlla qui prima di comprare.</p>
+      <p class="tag">Tutte le tue carte Yu-Gi-Oh! con immagini, rarità, espansione, edizione e lingua. Controlla qui prima di comprare.</p>
     </div>
+    <div class="uilang"><label for="ui-lang" class="sr">Lingua del sito</label><select id="ui-lang" data-notr><option value="it">Italiano</option><option value="en">English</option></select></div>
     <div class="stats" aria-live="polite">
       <span><b id="s-copies">0</b>copie</span>
       <span><b id="s-vers">0</b>versioni</span>
@@ -456,6 +468,54 @@ button.thumb { cursor: pointer; }
   </div>
 </div>
 
+<div id="editor" class="viewer" hidden>
+  <form id="ed-form" class="vbox edbox" role="dialog" aria-modal="true" aria-labelledby="ed-title" autocomplete="off" novalidate>
+    <h3 id="ed-title">Modifica carta</h3>
+    <div>
+      <label for="ed-name">Nome della carta (non modificabile)</label>
+      <input id="ed-name" readonly aria-readonly="true" tabindex="-1" style="opacity:.7;cursor:not-allowed">
+    </div>
+    <div class="g2">
+      <div>
+        <label for="ed-code">Codice</label>
+        <input id="ed-code" class="mono" maxlength="24">
+      </div>
+      <div id="ed-qty-wrap">
+        <label for="ed-qty">Copie</label>
+        <input id="ed-qty" type="number" min="1" max="999" inputmode="numeric">
+      </div>
+    </div>
+    <div>
+      <label for="ed-set">Espansione</label>
+      <input id="ed-set" list="dl-set">
+    </div>
+    <div>
+      <label for="ed-rar">Rarità</label>
+      <input id="ed-rar" list="dl-rar">
+    </div>
+    <div class="g2">
+      <div>
+        <label for="ed-ed">Edizione</label>
+        <select id="ed-ed">
+          <option value="1st">1ª Edizione</option>
+          <option value="unl">Unlimited</option>
+          <option value="ltd">Limited</option>
+        </select>
+      </div>
+      <div>
+        <label for="ed-lang">Lingua</label>
+        <select id="ed-lang"></select>
+      </div>
+    </div>
+    <div id="ed-note" class="note" hidden></div>
+    <p id="ed-err" class="edwarn" role="alert"></p>
+    <div class="btns">
+      <button type="submit" id="ed-save" class="btn main-btn">Salva modifiche</button>
+      <button type="button" id="ed-cancel" class="btn ghost">Annulla</button>
+    </div>
+  </form>
+</div>
+
 
 <script>
 (function () {
@@ -489,6 +549,7 @@ button.thumb { cursor: pointer; }
   var langTouched = false;
   var tab = "col";
   var pendingDel = null, pendingTimer = null, statusTimer = null;
+  var PHOTO_EDIT = false; /* le immagini sono quelle ufficiali: niente caricamento o modifica di foto proprie */
   var repo = null, downloads = null, assets = null, photoOK = false, photoMode = "";
   var formPhoto = null;
   var viewing = null, pickTarget = null;
@@ -538,7 +599,7 @@ button.thumb { cursor: pointer; }
     return (list || cards).filter(function (c) {
       if (compact(c.name).indexOf(cq) >= 0 || compact(c.code).indexOf(cq) >= 0 || norm(c.set).indexOf(nq) >= 0) return true;
       var p = pidOf(c);
-      return p && pids[p];
+      return !!(p && pids[p]) || nameHit(c, q);
     }).sort(byName);
   }
   function byName(a, b) {
@@ -590,12 +651,26 @@ button.thumb { cursor: pointer; }
     return (i != null && n[i]) ? n[i] : n[0];
   }
   function prefLang() { return $("f-lang").value || "IT"; }
+  /* nome da mostrare: con il sito in inglese, il nome inglese della carta (quello salvato resta nella lingua della stampa) */
+  function showName(ci, lang) { return UI === "en" ? DB.cards[ci][1][0] : nameIn(ci, lang); }
+  function dispName(c) {
+    if (UI === "en" && dbState === "ready") {
+      var cand = candidatesOf(c);
+      if (cand.length === 1 && DB.cards[cand[0]][1][0]) return DB.cards[cand[0]][1][0];
+    }
+    return c.name || c.code;
+  }
+  function canonName(d) {
+    if (dbState !== "ready" || !d.pid || !pidMap.has(d.pid)) return;
+    var ci = pidMap.get(d.pid), k = compact(d.name);
+    if (DB.cards[ci][1].some(function (x) { return x && compact(x) === k; })) d.name = nameIn(ci, d.lang);
+  }
 
   function buildIndex(raw) {
     var gen = ++indexGen;
     DB = raw;
     nameN = []; nameW = []; codesC = []; cIdx = []; gIdx = []; eIdx = []; lIdx = [];
-    decoded = {}; pidCache = {}; codeReady = false;
+    decoded = {}; pidCache = {}; candCache = {}; codeReady = false;
     var n = DB.cards.length, i, k;
     nameMap = new Map(); pidMap = new Map();
     for (i = 0; i < n; i++) {
@@ -604,7 +679,7 @@ button.thumb { cursor: pointer; }
         var w = words(c[1][k]);
         if (w && !seen[w]) {
           seen[w] = 1; arr.push(w);
-          nameMap.set(w, nameMap.has(w) && nameMap.get(w) !== i ? -1 : i);
+          var lst = nameMap.get(w); if (!lst) nameMap.set(w, [i]); else if (lst.indexOf(i) < 0) lst.push(i);
         }
       }
       nameN.push(arr);
@@ -642,7 +717,7 @@ button.thumb { cursor: pointer; }
   function fmtDate(iso) {
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
     if (!m) return "";
-    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(LOC(), { day: "numeric", month: "long", year: "numeric" });
   }
   function readChecked() {
     try { return localStorage.getItem("ygo-db-checked") || lastChecked; } catch (e) { return lastChecked; }
@@ -653,7 +728,7 @@ button.thumb { cursor: pointer; }
     $("db-hint").hidden = dbMode !== "fetch";
     if (dbState === "ready") {
       var d = fmtDate(DB.date), chk = readChecked(), when = "";
-      if (chk) { try { when = new Date(chk).toLocaleString("it-IT", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) {} }
+      if (chk) { try { when = new Date(chk).toLocaleString(LOC(), { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) {} }
       el.textContent = "Elenco carte: " + plural(DB.cards.length, "carta", "carte") + " e " + plural(DB.sets.length, "espansione", "espansioni") +
         (d ? ", aggiornato al " + d : "") + "." + (codeReady ? "" : " Preparo i codici\u2026") +
         (when ? " Ultimo controllo: " + when + "." : "") +
@@ -720,20 +795,45 @@ button.thumb { cursor: pointer; }
     }
     return out;
   }
-  var pidCache = {};
+  var pidCache = {}, candCache = {};
+  /* Carte dell'elenco a cui può corrispondere una carta registrata: per password, per codice o per nome (anche ambiguo). */
+  function candidatesOf(c) {
+    if (dbState !== "ready") return [];
+    if (c.pid && pidMap.has(c.pid)) return [pidMap.get(c.pid)];
+    var key = (c.code || "") + "|" + (c.name || "");
+    if (codeReady && key in candCache) return candCache[key];
+    var out = [], cc = (c.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (cc && codeReady && codeMap.has(cc)) out = [cIdx[codeMap.get(cc)]];
+    else if (c.name) out = nameMap.get(words(c.name)) || [];
+    if (codeReady) candCache[key] = out;
+    return out;
+  }
   function pidOf(c) {
     if (c.pid) return c.pid;
-    if (dbState !== "ready") return 0;
-    var key = (c.code || "") + "|" + (c.name || "");
-    if (key in pidCache) return pidCache[key];
-    var p = 0, cc = (c.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (cc && codeReady && codeMap.has(cc)) p = DB.cards[cIdx[codeMap.get(cc)]][0] || 0;
-    if (!p && c.name) {
-      var ci = nameMap.get(words(c.name));
-      if (ci != null && ci >= 0) p = DB.cards[ci][0] || 0;
+    var cand = candidatesOf(c);
+    return cand.length === 1 ? (DB.cards[cand[0]][0] || 0) : 0;
+  }
+  /* La carta registrata ha, in qualunque lingua, un nome che corrisponde alla ricerca? */
+  function nameHit(c, q) {
+    var nq = words(q);
+    if (nq.length < 2) return false;
+    var toks = nq.split(" ");
+    return candidatesOf(c).some(function (ci) {
+      return nameN[ci].some(function (s) { return scoreName(s, nq, toks) < 9; });
+    });
+  }
+  function altHTML(c) {
+    var cand = candidatesOf(c);
+    if (cand.length !== 1) return "";
+    var names = DB.cards[cand[0]][1];
+    if (UI === "en") {
+      var own = nameIn(cand[0], c.lang), lbl = { IT: "italiano", DE: "tedesco", FR: "francese", ES: "spagnolo", PT: "portoghese" }[c.lang];
+      if (!lbl || !own || compact(own) === compact(names[0])) return "";
+      return '<div class="alt">In ' + lbl + ": " + esc(own) + "</div>";
     }
-    pidCache[key] = p;
-    return p;
+    var other = c.lang === "IT" ? names[0] : names[1];
+    if (!other || compact(other) === compact(c.name)) return "";
+    return '<div class="alt">' + (c.lang === "IT" ? "In inglese: " : "In italiano: ") + esc(other) + "</div>";
   }
   function resolvePid(d) {
     if (d.pid) return d.pid;
@@ -800,7 +900,9 @@ button.thumb { cursor: pointer; }
     var pl = prefLang();
     return searchNames(value, 8).map(function (ci) {
       var n = DB.cards[ci][1];
-      var main = nameIn(ci, pl), other = n[0] !== main ? n[0] : (n[1] || "");
+      var main = showName(ci, pl), other;
+      if (UI === "en") { var pn = nameIn(ci, pl); other = pn !== main ? pn : (n[1] || ""); }
+      else other = n[0] !== main ? n[0] : (n[1] || "");
       return {
         html: '<span class="so-main">' + esc(main) + '</span><span class="so-sub">' + (other ? "<span>" + esc(other) + "</span>" : "") + "<span>" + plural(nameW[ci], "stampa", "stampe") + "</span></span>",
         pick: function () { onPick(ci); }
@@ -813,7 +915,7 @@ button.thumb { cursor: pointer; }
       var rars = DB.rs[e.rs].map(function (r) { return DB.rar[r]; });
       var rtxt = rars.length > 2 ? rars.slice(0, 2).join(", ") + " +" + (rars.length - 2) : rars.join(", ");
       return {
-        html: '<span class="so-main"><span class="code">' + esc(codeOf(g, e)) + "</span>" + esc(nameIn(ci, e.lang)) + '</span><span class="so-sub"><span>' + esc(DB.sets[g.si]) + "</span>" + (rtxt ? "<span>" + esc(rtxt) + "</span>" : "") + langBadge(e.lang) + "</span>",
+        html: '<span class="so-main"><span class="code">' + esc(codeOf(g, e)) + "</span>" + esc(showName(ci, e.lang)) + '</span><span class="so-sub"><span>' + esc(DB.sets[g.si]) + "</span>" + (rtxt ? "<span>" + esc(rtxt) + "</span>" : "") + langBadge(e.lang) + "</span>",
         pick: function () { onPick(ci, gIdx[i], eIdx[i]); }
       };
     });
@@ -829,7 +931,7 @@ button.thumb { cursor: pointer; }
     $("f-code").value = codeOf(g, e);
     $("f-set").value = DB.sets[g.si];
     setLang(e.lang);
-    $("f-name").value = nameIn(ci, e.lang);
+    $("f-name").value = showName(ci, e.lang);
     if (ri >= 0 && rids[ri] != null) $("f-rar").value = canonRarity(DB.rar[rids[ri]]);
     else if (rids.length === 1) $("f-rar").value = canonRarity(DB.rar[rids[0]]);
     else $("f-rar").value = "";
@@ -867,7 +969,7 @@ button.thumb { cursor: pointer; }
     if (!rows.length && !picker.all && !picker.code) { picker.all = true; rows = printRows(picker); note = "Nessuna stampa in " + picker.lang + ": ti mostro tutte le lingue."; }
     var total = rows.length;
     rows = rows.slice(0, 200);
-    var nm = nameIn(picker.ci, picker.lang);
+    var nm = showName(picker.ci, picker.lang);
     box.innerHTML = '<div class="ph"><b>Scegli la stampa: ' + esc(nm) + "</b>" +
       (picker.code ? "" : '<label class="tog"><input type="checkbox" id="pk-all"' + (picker.all ? " checked" : "") + "> Tutte le lingue</label>") +
       '<button type="button" class="btn ghost small" id="pk-close">Chiudi</button></div>' +
@@ -898,7 +1000,7 @@ button.thumb { cursor: pointer; }
     if (!cc || !codeMap.has(cc)) return false;
     var i = codeMap.get(cc), ci = cIdx[i], g = groupsOf(ci)[gIdx[i]], e = g.ents[eIdx[i]], rids = DB.rs[e.rs];
     formPid = DB.cards[ci][0] || 0;
-    if (!$("f-name").value.trim()) $("f-name").value = nameIn(ci, e.lang);
+    if (!$("f-name").value.trim()) $("f-name").value = showName(ci, e.lang);
     if (!$("f-set").value.trim()) $("f-set").value = DB.sets[g.si];
     if (!langTouched) setLang(e.lang);
     if (!$("f-rar").value.trim() && rids.length === 1) $("f-rar").value = canonRarity(DB.rar[rids[0]]);
@@ -945,6 +1047,24 @@ button.thumb { cursor: pointer; }
           return ref.set({ name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, img: d.img || "", pid: d.pid || 0, updated: Date.now() })
             .then(function () { return { existed: false }; });
         });
+      },
+      update: function (kind, id, d) {
+        var col = cols[kind], nid = makeId(d), now = Date.now();
+        var fields = { name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, pid: d.pid || 0, updated: now };
+        if (kind === "cards") fields.qty = d.qty;
+        if (nid === id) return col.doc(id).update(fields).then(function () { return { id: id, merged: false }; });
+        var old = listFor(kind).filter(function (c) { return c.id === id; })[0] || {};
+        var ref = col.doc(nid);
+        return ref.get().then(function (snap) {
+          if (snap.exists) {
+            var cur = snap.data(), patch = { updated: now }, qty = 0;
+            if (kind === "cards") { qty = (Number(cur.qty) || 0) + (Number(d.qty) || 1); patch.qty = qty; }
+            if (!cur.img && old.img) patch.img = old.img;
+            return ref.update(patch).then(function () { return { id: nid, merged: true, qty: qty }; });
+          }
+          var doc = Object.assign({}, fields, { img: old.img || "" });
+          return ref.set(doc).then(function () { return { id: nid, merged: false }; });
+        }).then(function (res) { return col.doc(id).delete().then(function () { return res; }); });
       },
       setQty: function (id, qty) { return cols.cards.doc(id).update({ qty: qty, updated: Date.now() }); },
       setImg: function (kind, id, img) { return cols[kind].doc(id).update({ img: img || "", updated: Date.now() }); },
@@ -1004,6 +1124,30 @@ button.thumb { cursor: pointer; }
       lists[kind] = lists[kind].filter(function (c) { return c.id !== id; });
       lists.tomb[kind + ":" + id] = Date.now();
       push(kind); return Promise.resolve();
+    };
+    api.update = function (kind, id, d) {
+      var list = lists[kind], now = Date.now();
+      var old = list.filter(function (c) { return c.id === id; })[0];
+      if (!old) return Promise.resolve({ id: id, merged: false });
+      var nid = makeId(d);
+      var fields = { name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, pid: d.pid || 0, updated: now };
+      if (kind === "cards") fields.qty = d.qty;
+      if (nid === id) { Object.assign(old, fields); push(kind); return Promise.resolve({ id: id, merged: false }); }
+      var tgt = list.filter(function (c) { return c.id === nid; })[0];
+      lists[kind] = list.filter(function (c) { return c.id !== id; });
+      lists.tomb[kind + ":" + id] = now;
+      if (tgt) {
+        var qty = 0;
+        if (kind === "cards") { tgt.qty = (Number(tgt.qty) || 0) + (Number(d.qty) || 1); qty = tgt.qty; }
+        if (!tgt.img && old.img) tgt.img = old.img;
+        tgt.updated = now;
+        push(kind);
+        return Promise.resolve({ id: nid, merged: true, qty: qty });
+      }
+      delete lists.tomb[kind + ":" + nid];
+      lists[kind].push(Object.assign({}, old, fields, { id: nid }));
+      push(kind);
+      return Promise.resolve({ id: nid, merged: false });
     };
     api.getState = function () { return JSON.parse(JSON.stringify(lists)); };
     api.setState = function (st) {
@@ -1144,11 +1288,14 @@ button.thumb { cursor: pointer; }
       '<span class="chip lang">' + esc(c.lang) + '</span>';
   }
   function thumbHTML(c, kind, interactive) {
-    var alt = esc(c.name || c.code);
+    var alt = esc(dispName(c));
     if (c.img) {
       return '<button type="button" class="thumb" data-act="view" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Ingrandisci la foto di ' + alt + '"><img ' + imgAttr(c.img) + ' alt="" loading="lazy"></button>';
     }
-    if (interactive && photoOK && !readOnly) {
+    var art = c.pid ? '<img class="art" src="https://images.ygoprodeck.com/images/cards_small/' + encodeURIComponent(c.pid) + '.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">' : "";
+    if (art && !(interactive && PHOTO_EDIT && photoOK && !readOnly)) return '<div class="thumb off empty" aria-hidden="true"><span>—</span>' + art + '</div>';
+    if (art) return '<button type="button" class="thumb empty off" data-act="photo" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Aggiungi una tua foto di ' + alt + '" title="Immagine ufficiale: clicca per usare una tua foto"><span>+ foto</span>' + art + '</button>';
+    if (interactive && PHOTO_EDIT && photoOK && !readOnly) {
       return '<button type="button" class="thumb empty" data-act="photo" data-kind="' + kind + '" data-id="' + esc(c.id) + '" aria-label="Aggiungi una foto di ' + alt + '"><span>+ foto</span></button>';
     }
     return '<div class="thumb" aria-hidden="true"></div>';
@@ -1161,12 +1308,13 @@ button.thumb { cursor: pointer; }
     var key = kind + ":" + c.id;
     var sure = pendingDel === key;
     var rm = '<button type="button" class="rm' + (sure ? " sure" : "") + '" data-act="del" data-kind="' + kind + '" data-id="' + esc(c.id) + '">' + (sure ? "Conferma rimozione" : "Rimuovi") + '</button>';
+    var acts = '<div class="act"><button type="button" class="rm" data-act="edit" data-kind="' + kind + '" data-id="' + esc(c.id) + '">Modifica</button>' + rm + '</div>';
     if (kind === "cards") {
       if (actions && !readOnly) {
-        side = '<div class="side"><div class="step" role="group" aria-label="Copie di ' + esc(c.name || c.code) + '">' +
+        side = '<div class="side"><div class="step" role="group" aria-label="Copie di ' + esc(dispName(c)) + '">' +
           '<button type="button" data-act="dec" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in meno"' + (qty <= 1 ? " disabled" : "") + '>−</button>' +
           '<output class="' + (qty > 1 ? "dupe" : "") + '">' + qty + '</output>' +
-          '<button type="button" data-act="inc" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in più">+</button></div>' + rm + '</div>';
+          '<button type="button" data-act="inc" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in più">+</button></div>' + acts + '</div>';
       } else {
         side = '<div class="own" title="Copie possedute">×' + qty + '</div>';
       }
@@ -1175,12 +1323,12 @@ button.thumb { cursor: pointer; }
         var own = findExact(c, cards);
         if (own) extra = '<span class="chip warn">Già in raccolta ×' + (Number(own.qty) || 1) + '</span>';
         else if (related(c, cards).length) extra = '<span class="chip soft">Hai altre versioni</span>';
-        side = readOnly ? "" : '<div class="side"><button type="button" class="btn small" data-act="bought" data-kind="wishlist" data-id="' + esc(c.id) + '">Comprata</button>' + rm + '</div>';
+        side = readOnly ? "" : '<div class="side"><button type="button" class="btn small" data-act="bought" data-kind="wishlist" data-id="' + esc(c.id) + '">Comprata</button>' + acts + '</div>';
       } else {
         side = '<div><span class="chip soft">Desiderata</span></div>';
       }
     }
-    return '<li class="row">' + thumbHTML(c, kind, actions) + '<div class="main"><div class="nm">' + esc(c.name || c.code) + '</div>' +
+    return '<li class="row">' + thumbHTML(c, kind, actions) + '<div class="main"><div class="nm">' + esc(dispName(c)) + '</div>' + altHTML(c) +
       (meta ? '<div class="meta">' + meta + '</div>' : "") +
       '<div class="chips">' + chipsHTML(c) + extra + '</div></div>' + side + '</li>';
   }
@@ -1221,7 +1369,7 @@ button.thumb { cursor: pointer; }
     }
   }
   function filtered() {
-    var q = norm($("fq").value), cq = compact($("fq").value);
+    var fqRaw = $("fq").value, q = norm(fqRaw), cq = compact(fqRaw);
     var fr = $("fr").value, fe = $("fe").value, fl = $("fl").value, fs = $("fs").value, fd = $("fd").checked;
     var rows = cards.filter(function (c) {
       if (fr && c.rarity !== fr) return false;
@@ -1229,7 +1377,7 @@ button.thumb { cursor: pointer; }
       if (fl && c.lang !== fl) return false;
       if (fs && c.set !== fs) return false;
       if (fd && (Number(c.qty) || 0) < 2) return false;
-      if (q && compact(c.name).indexOf(cq) < 0 && compact(c.code).indexOf(cq) < 0 && norm(c.set).indexOf(q) < 0) return false;
+      if (q && compact(c.name).indexOf(cq) < 0 && compact(c.code).indexOf(cq) < 0 && norm(c.set).indexOf(q) < 0 && !nameHit(c, fqRaw)) return false;
       return true;
     });
     var o = $("fo").value;
@@ -1255,7 +1403,7 @@ button.thumb { cursor: pointer; }
     if (showCol) {
       if (!cards.length) {
         $("count").textContent = "";
-        el.innerHTML = '<p class="empty"><b>Nessuna carta registrata.</b> Scrivi il nome o il codice nel modulo e scegli la carta dai suggerimenti: espansione, rarità e lingua si compilano da soli. Poi indica l\'edizione e, se vuoi, aggiungi una foto.</p>';
+        el.innerHTML = '<p class="empty"><b>Nessuna carta registrata.</b> Scrivi il nome o il codice nel modulo e scegli la carta dai suggerimenti: espansione, rarità e lingua si compilano da soli. Poi indica l\'edizione.</p>';
         return;
       }
       var rows = filtered();
@@ -1319,6 +1467,7 @@ button.thumb { cursor: pointer; }
   function renderDupeInner() {
     var d = readForm(), box = $("dupe"), btn = $("f-btn");
     d.pid = resolvePid(d);
+    canonName(d);
     btn.textContent = "Aggiungi alla raccolta";
     btn.className = "btn main-btn";
     if (!d.name && !d.code) { box.hidden = true; box.innerHTML = ""; return; }
@@ -1397,6 +1546,7 @@ button.thumb { cursor: pointer; }
     if (!d.name) { say("Scrivi il nome della carta.", "bad"); $("f-name").focus(); return null; }
     if (!d.rarity) { say("Scegli la rarità della carta.", "bad"); $("f-rar").focus(); return null; }
     d.pid = resolvePid(d);
+    canonName(d);
     return d;
   }
   function withPhoto(d) {
@@ -1440,7 +1590,7 @@ button.thumb { cursor: pointer; }
   }
   function toCSV(kind) {
     var wish = kind === "wishlist";
-    var head = ["Nome", "Codice", "Espansione", "Rarità", "Edizione", "Lingua"].concat(wish ? [] : ["Quantità"]);
+    var head = (UI === "en" ? ["Name", "Code", "Set", "Rarity", "Edition", "Language"] : ["Nome", "Codice", "Espansione", "Rarità", "Edizione", "Lingua"]).concat(wish ? [] : [UI === "en" ? "Quantity" : "Quantità"]);
     var rows = listFor(kind).slice().sort(byName).map(function (c) {
       var r = [c.name, c.code, c.set, c.rarity, EDITIONS[c.edition] || c.edition, c.lang];
       if (!wish) r.push(c.qty);
@@ -1533,9 +1683,9 @@ button.thumb { cursor: pointer; }
     var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
     if (!c || !c.img) return;
     viewing = { kind: kind, id: id };
-    $("v-title").textContent = c.name || c.code;
+    $("v-title").textContent = dispName(c);
     setViewerImg(c.img);
-    var canEdit = photoOK && !readOnly;
+    var canEdit = PHOTO_EDIT && photoOK && !readOnly;
     $("v-change").hidden = !canEdit;
     $("v-remove").hidden = !canEdit;
     $("viewer").hidden = false;
@@ -1546,6 +1696,76 @@ button.thumb { cursor: pointer; }
     $("viewer").hidden = true;
     $("v-img").removeAttribute("src");
   }
+
+  /* ---------- modifica di una carta registrata ---------- */
+  var editing = null;
+  function readEditor() {
+    var q = parseInt($("ed-qty").value, 10);
+    if (!(q >= 1)) q = 1;
+    return {
+      name: editing ? editing.item.name : $("ed-name").value.trim(),
+      code: $("ed-code").value.trim().toUpperCase().replace(/\s+/g, ""),
+      set: $("ed-set").value.trim().replace(/\s+/g, " "),
+      rarity: canonRarity($("ed-rar").value.trim()),
+      edition: $("ed-ed").value,
+      lang: $("ed-lang").value,
+      qty: Math.min(q, 999)
+    };
+  }
+  function edCheck() {
+    if (!editing) return;
+    var d = readEditor(), nid = makeId(d), note = $("ed-note");
+    if (d.rarity && nid !== editing.id) {
+      var tgt = listFor(editing.kind).filter(function (c) { return c.id === nid; })[0];
+      if (tgt) {
+        note.className = "note warn";
+        note.innerHTML = editing.kind === "cards"
+          ? '<span class="lbl">Già presente</span><span>Hai già ' + plural(Number(tgt.qty) || 1, "copia", "copie") + " di questa versione: le copie verranno sommate.</span>"
+          : '<span class="lbl">Già presente</span><span>Questa versione è già nella lista dei desideri: verranno unite.</span>';
+        note.hidden = false;
+        return;
+      }
+    }
+    note.hidden = true; note.innerHTML = "";
+  }
+  function openEditor(kind, id) {
+    var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
+    if (!c) return;
+    editing = { kind: kind, id: id, item: c };
+    $("ed-title").textContent = "Modifica: " + dispName(c);
+    $("ed-name").value = dispName(c); $("ed-code").value = c.code; $("ed-set").value = c.set; $("ed-rar").value = c.rarity;
+    $("ed-ed").value = c.edition; $("ed-lang").value = c.lang;
+    $("ed-qty").value = Number(c.qty) || 1;
+    $("ed-qty-wrap").hidden = kind !== "cards";
+    $("ed-err").textContent = "";
+    edCheck();
+    $("editor").hidden = false;
+    $("ed-ed").focus();
+  }
+  function closeEditor() { editing = null; $("editor").hidden = true; }
+  ["ed-name", "ed-code", "ed-set", "ed-rar", "ed-ed", "ed-lang", "ed-qty"].forEach(function (id) {
+    $(id).addEventListener("input", edCheck);
+    $(id).addEventListener("change", edCheck);
+  });
+  $("ed-cancel").addEventListener("click", closeEditor);
+  $("editor").addEventListener("mousedown", function (e) { if (e.target === this) closeEditor(); });
+  $("ed-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!editing || readOnly || !repo) return;
+    var ed = editing, o = ed.item, d = readEditor(), err = $("ed-err");
+    if (!d.name) { err.textContent = "Scrivi il nome della carta."; $("ed-name").focus(); return; }
+    if (!d.rarity) { err.textContent = "Scegli la rarità della carta."; $("ed-rar").focus(); return; }
+    d.img = o.img || "";
+    var same = norm(d.name) === norm(o.name) && compact(d.code) === compact(o.code);
+    d.pid = same ? (o.pid || pidOf(o)) : pidOf({ code: d.code, name: d.name });
+    $("ed-save").disabled = true;
+    enqueue(function () { return repo.update(ed.kind, ed.id, d); }).then(function (res) {
+      closeEditor();
+      say(res.merged ? "Unita a una carta già presente" + (res.qty ? ": ora ne hai " + res.qty : "") + "." : "Modifiche salvate: " + dispName(d) + ".", "ok");
+    }).catch(function () {
+      err.textContent = "Non sono riuscito a salvare. Riprova.";
+    }).then(function () { $("ed-save").disabled = false; });
+  });
 
   /* ---------- eventi ---------- */
   function onFormChange() { renderDupe(); }
@@ -1565,7 +1785,7 @@ button.thumb { cursor: pointer; }
 
   Suggest($("f-name"), function (v) {
     return nameItems(v, function (ci) {
-      $("f-name").value = nameIn(ci, prefLang());
+      $("f-name").value = showName(ci, prefLang());
       formPid = DB.cards[ci][0] || 0;
       showPicker(ci);
       renderDupe();
@@ -1591,7 +1811,7 @@ button.thumb { cursor: pointer; }
       if (its.length) return its;
     }
     return nameItems(v, function (ci) {
-      $("q").value = nameIn(ci, prefLang());
+      $("q").value = showName(ci, prefLang());
       renderCheck();
     });
   });
@@ -1612,7 +1832,7 @@ button.thumb { cursor: pointer; }
     $("f-btn").disabled = true; $("f-wish").disabled = true;
     withPhoto(d).then(function (r) {
       return enqueue(function () { return repo.add(r.d); }).then(function (res) {
-        say((res.merged ? "Copia aggiunta: " : "Registrata: ") + d.name + ". Ora ne hai " + res.qty + "." + (r.photoFailed ? " La foto non è stata caricata." : ""), r.photoFailed ? "bad" : "ok");
+        say((res.merged ? "Copia aggiunta: " : "Registrata: ") + dispName(d) + ". Ora ne hai " + res.qty + "." + (r.photoFailed ? " La foto non è stata caricata." : ""), r.photoFailed ? "bad" : "ok");
         clearFormAfterAdd();
       });
     }).catch(fail).then(function () { $("f-btn").disabled = readOnly; $("f-wish").disabled = readOnly; });
@@ -1624,8 +1844,8 @@ button.thumb { cursor: pointer; }
     $("f-btn").disabled = true; $("f-wish").disabled = true;
     withPhoto(d).then(function (r) {
       return enqueue(function () { return repo.addWish(r.d); }).then(function (res) {
-        if (res.existed) say("È già nella lista dei desideri: " + d.name + ".", "");
-        else say("Aggiunta ai desideri: " + d.name + "." + (r.photoFailed ? " La foto non è stata caricata." : ""), r.photoFailed ? "bad" : "ok");
+        if (res.existed) say("È già nella lista dei desideri: " + dispName(d) + ".", "");
+        else say("Aggiunta ai desideri: " + dispName(d) + "." + (r.photoFailed ? " La foto non è stata caricata." : ""), r.photoFailed ? "bad" : "ok");
         clearFormAfterAdd();
       });
     }).catch(fail).then(function () { $("f-btn").disabled = readOnly; $("f-wish").disabled = readOnly; });
@@ -1656,6 +1876,7 @@ button.thumb { cursor: pointer; }
     var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
     if (!c) return;
     if (act === "view") { openViewer(kind, id); return; }
+    if (act === "edit") { if (!readOnly && repo) openEditor(kind, id); return; }
     if (readOnly || !repo) return;
     if (act === "photo") { pickTarget = { kind: kind, id: id }; $("pick").click(); return; }
     var qty = Number(c.qty) || 1;
@@ -1665,7 +1886,7 @@ button.thumb { cursor: pointer; }
       var d = { name: c.name, code: c.code, set: c.set, rarity: c.rarity, edition: c.edition, lang: c.lang, qty: 1, img: c.img || "", pid: c.pid || 0 };
       enqueue(function () { return repo.add(d); }).then(function (res) {
         return enqueue(function () { return repo.remove("wishlist", id); }).then(function () {
-          say("Spostata nel raccoglitore: " + (c.name || c.code) + ". Ora ne hai " + res.qty + ".", "ok");
+          say("Spostata nel raccoglitore: " + dispName(c) + ". Ora ne hai " + res.qty + ".", "ok");
         });
       }).catch(fail);
     } else if (act === "del") {
@@ -1674,7 +1895,7 @@ button.thumb { cursor: pointer; }
         clearTimeout(pendingTimer); pendingDel = null;
         enqueue(function () { return repo.remove(kind, id); }).then(function () {
           releaseAsset(c.img);
-          say("Rimossa: " + (c.name || c.code) + ".", "");
+          say("Rimossa: " + dispName(c) + ".", "");
         }).catch(fail);
       } else {
         pendingDel = key;
@@ -1700,7 +1921,10 @@ button.thumb { cursor: pointer; }
   });
   $("v-close").addEventListener("click", closeViewer);
   $("viewer").addEventListener("click", function (e) { if (e.target === this) closeViewer(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && viewing) closeViewer(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && viewing) closeViewer();
+    else if (e.key === "Escape" && editing) closeEditor();
+  });
   $("v-change").addEventListener("click", function () {
     if (!viewing) return;
     pickTarget = { kind: viewing.kind, id: viewing.id };
@@ -1873,7 +2097,7 @@ button.thumb { cursor: pointer; }
   }
   function setSync(t, kind) { var el = $("sync-status"); el.textContent = t; el.className = "sync-status" + (kind ? " " + kind : ""); }
   function fmtWhen(iso) {
-    try { return new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
+    try { return new Date(iso).toLocaleString(LOC(), { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; }
   }
   function renderSyncUI() {
     var on = !!sync.cfg;
@@ -1988,13 +2212,15 @@ button.thumb { cursor: pointer; }
 
   /* ---------- avvio ---------- */
   function renderAll() {
+    if (editing && !listFor(editing.kind).some(function (c) { return c.id === editing.id; })) closeEditor();
     if (viewing && !listFor(viewing.kind).some(function (c) { return c.id === viewing.id && c.img; })) closeViewer();
-    $("photo-row").hidden = !(photoOK && !readOnly);
+    $("photo-row").hidden = !(PHOTO_EDIT && photoOK && !readOnly);
     renderStats(); renderFilterOptions(); renderList(); renderCheck(); renderDupe();
   }
   function init() {
     $("f-lang").innerHTML = LANGS.map(function (l) { return '<option value="' + l[0] + '">' + l[0] + " · " + l[1] + "</option>"; }).join("");
     $("f-lang").value = "IT";
+    $("ed-lang").innerHTML = $("f-lang").innerHTML;
     $("dl-rar").innerHTML = RARITIES.map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
     renderDbNote();
     renderAll();
@@ -2008,6 +2234,227 @@ button.thumb { cursor: pointer; }
     } catch (e) {}
     return Promise.resolve(null);
   }
+
+  /* ---------- lingua del sito (italiano / inglese) ---------- */
+  var UI_KEY = "ygo-ui-lang";
+  var EN = {
+    "Tutte le tue carte Yu-Gi-Oh! con immagini, rarità, espansione, edizione e lingua. Controlla qui prima di comprare.": "All your Yu-Gi-Oh! cards with images, rarity, set, edition and language. Check here before you buy.",
+    "copie": "copies", "versioni": "versions", "espansioni": "sets", "da comprare": "to buy",
+    "Lingua del sito": "Site language",
+    "Registrala dopo l'acquisto": "Register it after buying",
+    "Raccolta YGO": "YGO Collection", "ygo-dati": "ygo-data",
+    "Ce l'ho già?": "Do I already have it?",
+    "Nome o codice, es. Mago Nero o LOB-IT005": "Name or code, e.g. Dark Magician or LOB-EN005",
+    "Carte suggerite": "Suggested cards", "Codici suggeriti": "Suggested codes",
+    "Aggiungi una carta": "Add a card",
+    "Aggiorna elenco carte": "Update card list",
+    "Il pulsante carica l'ultima versione dell'elenco pubblicata con questa pagina.": "The button loads the latest card list published with this page.",
+    "Nome della carta": "Card name", "Drago Bianco Occhi Blu": "Blue-Eyes White Dragon",
+    "Codice": "Code", "se ce l'hai": "if you have it", "Copie": "Copies", "Espansione": "Set", "Rarità": "Rarity",
+    "Edizione": "Edition", "1ª Edizione": "1st Edition", "Lingua": "Language",
+    "Aggiungi alla raccolta": "Add to collection", "Aggiungi ai desideri": "Add to wishlist",
+    "Raccoglitore e lista dei desideri": "Collection and wishlist", "Elenco": "List",
+    "Raccoglitore": "Collection", "Da comprare": "To buy",
+    "Filtra per nome, codice o espansione": "Filter by name, code or set", "Ordine": "Sort",
+    "Ordine: nome": "Sort: name", "Ordine: più recenti": "Sort: newest", "Ordine: espansione": "Sort: set", "Ordine: più copie": "Sort: most copies",
+    "Solo doppioni": "Duplicates only",
+    "Esporta CSV": "Export CSV", "Copia CSV": "Copy CSV", "Importa CSV": "Import CSV",
+    "Colonne: Nome; Codice; Espansione; Rarità; Edizione; Lingua; Quantità": "Columns: Name; Code; Set; Rarity; Edition; Language; Quantity",
+    "File CSV da importare": "CSV file to import",
+    "Tutte le rarità": "All rarities", "Tutte le edizioni": "All editions", "Tutte le lingue": "All languages", "Tutte le espansioni": "All sets",
+    "Italiano": "Italian", "Inglese": "English", "Tedesco": "German", "Francese": "French", "Spagnolo": "Spanish", "Portoghese": "Portuguese", "Giapponese": "Japanese", "Coreano": "Korean", "Cinese": "Chinese", "Inglese asiatico": "Asian English",
+    "IT · Italiano": "IT · Italian", "EN · Inglese": "EN · English", "DE · Tedesco": "DE · German", "FR · Francese": "FR · French", "ES · Spagnolo": "ES · Spanish", "PT · Portoghese": "PT · Portuguese", "JP · Giapponese": "JP · Japanese", "KR · Coreano": "KR · Korean", "SC · Cinese": "SC · Chinese", "AE · Inglese asiatico": "AE · Asian English",
+    "1ª ED.": "1st ED.",
+    "Altri dispositivi": "Other devices",
+    "Collega un repository GitHub privato per ritrovare raccolta, lista dei desideri e foto su telefono e computer.": "Connect a private GitHub repository to find your collection and wishlist on your phone and computer.",
+    "Come si collega": "How to connect",
+    "Su GitHub crea un repository": "On GitHub create a", "privato": "private",
+    "solo per i tuoi dati, per esempio": "repository just for your data, for example",
+    ", con l'opzione “Add a README file”.": ", with the “Add a README file” option.",
+    "Vai in Settings → Developer settings → Personal access tokens →": "Go to Settings → Developer settings → Personal access tokens →",
+    "e crea un token. Come accesso scegli “Only select repositories” e solo": "and create a token. For access choose “Only select repositories” and only",
+    ". Nei permessi imposta": ". In permissions set",
+    "Incolla qui sotto nome del repository e token, poi premi “Collega e sincronizza”.": "Paste the repository name and token below, then press “Connect and sync”.",
+    "Su ogni altro dispositivo apri questo sito e ripeti il passaggio 3 con gli stessi dati.": "On every other device open this site and repeat step 3 with the same details.",
+    "Il token resta salvato solo in questo browser. Se due dispositivi cambiano la stessa carta, vince la modifica più recente.": "The token is stored only in this browser. If two devices change the same card, the most recent change wins.",
+    "Repository dati": "Data repository", "tuonome/ygo-dati": "yourname/ygo-data",
+    "Token di accesso": "Access token", "Ramo": "Branch",
+    "Collega e sincronizza": "Connect and sync", "Sincronizza ora": "Sync now", "Scollega": "Disconnect",
+    "Token salvato in questo browser": "Token saved in this browser",
+    "Foto della carta": "Card photo", "Cambia foto": "Change photo", "Togli foto": "Remove photo", "Chiudi": "Close",
+    "Modifica carta": "Edit card", "Nome della carta (non modificabile)": "Card name (cannot be changed)",
+    "Salva modifiche": "Save changes", "Annulla": "Cancel",
+    "Modifica": "Edit", "Rimuovi": "Remove", "Conferma rimozione": "Confirm removal", "Comprata": "Bought",
+    "Una copia in meno": "One copy less", "Una copia in più": "One more copy", "Copie possedute": "Copies owned",
+    "Hai altre versioni": "You have other versions",
+    "Carico l'elenco delle carte per i suggerimenti…": "Loading the card list for suggestions…",
+    "Elenco carte non disponibile.": "Card list not available.",
+    "Non riesco a salvare nel browser: esporta il CSV per non perdere i dati.": "Can't save in the browser: export the CSV so you don't lose your data.",
+    "Non sono riuscito a caricare la foto. Prova con un'altra immagine.": "Could not load the photo. Try another image.",
+    "Carico la foto…": "Loading the photo…", "Foto salvata.": "Photo saved.", "Foto tolta.": "Photo removed.",
+    "Carico la raccolta…": "Loading the collection…",
+    "Nessuna carta registrata.": "No cards registered.",
+    "Scrivi il nome o il codice nel modulo e scegli la carta dai suggerimenti: espansione, rarità e lingua si compilano da soli. Poi indica l'edizione.": "Type the name or code in the form and pick the card from the suggestions: set, rarity and language fill in by themselves. Then choose the edition.",
+    "Nessuna carta corrisponde ai filtri.": "No card matches the filters.",
+    "La lista dei desideri è vuota.": "The wishlist is empty.",
+    "Compila il modulo e premi “Aggiungi ai desideri” per le carte che vuoi comprare. Qui vedrai se ne hai già una versione. Quando la compri, premi “Comprata” e finisce nel raccoglitore.": "Fill in the form and press “Add to wishlist” for the cards you want to buy. Here you will see if you already own a version. When you buy it, press “Bought” and it moves to the collection.",
+    "Scrivi il nome o il codice della carta che stai per comprare.": "Type the name or code of the card you are about to buy.",
+    "Appena avrai registrato qualche carta, qui vedrai subito se ce l'hai già.": "As soon as you have registered some cards, you will see here right away if you already have it.",
+    "Non ce l'hai.": "You don't have it.", "Ce l'hai già.": "You already have it.",
+    "Nella lista dei desideri": "In the wishlist",
+    "È anche nella tua lista dei desideri.": "It is also in your wishlist.",
+    "Doppione": "Duplicate", "Nuova": "New", "Non hai ancora questa carta.": "You don't have this card yet.",
+    "Hai già altre versioni": "You already have other versions",
+    "Già presente": "Already there",
+    "Questa versione è già nella lista dei desideri: verranno unite.": "This version is already in the wishlist: they will be merged.",
+    "L'archivio è pieno: rimuovi qualche carta prima di aggiungerne altre.": "The storage is full: remove some cards before adding more.",
+    "Troppe operazioni ravvicinate. Riprova tra qualche secondo.": "Too many operations in a row. Try again in a few seconds.",
+    "Non hai il permesso di modificare questa raccolta.": "You don't have permission to edit this collection.",
+    "Non sono riuscito a salvare. Riprova.": "Could not save. Try again.",
+    "Puoi consultare la raccolta ma non modificarla da questa vista.": "You can view the collection but not edit it from this view.",
+    "Scrivi il nome della carta.": "Type the card name.", "Scegli la rarità della carta.": "Choose the card's rarity.",
+    "Il file è vuoto.": "The file is empty.",
+    "Servono almeno le colonne Nome e Rarità.": "At least the Name and Rarity columns are required.",
+    "File salvato.": "File saved.",
+    "Il salvataggio del file non è disponibile qui.": "Saving the file is not available here.",
+    "Download avviato. Se non parte, usa “Copia CSV”.": "Download started. If it doesn't start, use “Copy CSV”.",
+    "Il download non è disponibile qui: usa “Copia CSV”.": "Download is not available here: use “Copy CSV”.",
+    "CSV copiato. Incollalo in un foglio di calcolo o in un file di testo.": "CSV copied. Paste it into a spreadsheet or a text file.",
+    "Non riesco a copiare in automatico.": "Can't copy automatically.",
+    "Non riesco a leggere questo file.": "Can't read this file.",
+    "Il token non è valido o è scaduto.": "The token is not valid or has expired.",
+    "Il token non ha il permesso “Contents: Read and write” su questo repository.": "The token does not have the “Contents: Read and write” permission on this repository.",
+    "Repository o ramo non trovato. Controlla il nome, il ramo e che il token abbia accesso.": "Repository or branch not found. Check the name, the branch and that the token has access.",
+    "GitHub non è raggiungibile. Riprovo più tardi.": "GitHub is not reachable. I'll try again later.",
+    "Il file collection.json nel repository non è leggibile.": "The collection.json file in the repository cannot be read.",
+    "Sincronizzazione non riuscita.": "Sync failed.",
+    "Sincronizzo…": "Syncing…",
+    "Non collegato. I dati restano solo su questo dispositivo.": "Not connected. Your data stays only on this device.",
+    "Scollegato. Le carte restano su questo dispositivo.": "Disconnected. Your cards stay on this device.",
+    "Scrivi il repository nella forma nome/repository, per esempio tuonome/ygo-dati.": "Type the repository as name/repository, for example yourname/ygo-data.",
+    "Incolla il token di accesso.": "Paste the access token.",
+    "Controllo l'ultima versione dell'elenco…": "Checking the latest version of the list…",
+    "Non riesco a controllare ora. Riprova più tardi.": "Can't check right now. Try again later.",
+    "I dati sono salvati in questo browser, su questo dispositivo. Esporta il CSV ogni tanto per averne una copia di sicurezza.": "Your data is saved in this browser, on this device. Export the CSV now and then to keep a backup.",
+    "Il browser non permette di salvare i dati: restano solo finché la pagina è aperta. Esporta il CSV prima di chiuderla.": "The browser does not allow saving data: it stays only while the page is open. Export the CSV before closing it.",
+    "Non riesco a leggere la raccolta. Ricarica la pagina.": "Can't read the collection. Reload the page.",
+    "Nessuna stampa trovata.": "No print found."
+  };
+  var ENW = { copia: ["copy", "copies"], copie: ["copy", "copies"], versione: ["version", "versions"], versioni: ["version", "versions"], carta: ["card", "cards"], carte: ["card", "cards"], espansione: ["set", "sets"], espansioni: ["set", "sets"], riga: ["row", "rows"], righe: ["row", "rows"], stampa: ["print", "prints"], stampe: ["print", "prints"] };
+  function nw(n, w) { var a = ENW[w] || [w, w]; return n + " " + (+n === 1 ? a[0] : a[1]); }
+  var PAT = [
+    [/^(\d+) (copia|copie|versione|versioni|carta|carte|espansione|espansioni|riga|righe|stampa|stampe)$/, function (m) { return nw(m[1], m[2]); }],
+    [/^(\d+) di (\d+) (versione|versioni)$/, function (m) { return m[1] + " of " + nw(m[2], m[3]); }],
+    [/^Elenco carte: (\d+) (carta|carte) e (\d+) (espansione|espansioni)(?:, aggiornato al (.+?))?\.( Preparo i codici…)?(?: Ultimo controllo: (.+?)\.)?( Per aggiornarlo sostituisci questo file con la versione nuova\.)?$/, function (m) {
+      return "Card list: " + nw(m[1], m[2]) + " and " + nw(m[3], m[4]) + (m[5] ? ", updated on " + m[5] : "") + "." + (m[6] ? " Preparing the codes…" : "") + (m[7] ? " Last check: " + m[7] + "." : "") + (m[8] ? " To update it, replace this file with the new version." : "");
+    }],
+    [/^Modifica: (.+)$/, function (m) { return "Edit: " + m[1]; }],
+    [/^Ingrandisci la foto di (.+)$/, function (m) { return "Enlarge the photo of " + m[1]; }],
+    [/^Aggiungi una (?:tua )?foto di (.+)$/, function (m) { return "Add a photo of " + m[1]; }],
+    [/^Copie di (.+)$/, function (m) { return "Copies of " + m[1]; }],
+    [/^In inglese: (.+)$/, function (m) { return "In English: " + m[1]; }],
+    [/^In (italiano|tedesco|francese|spagnolo|portoghese): (.+)$/, function (m) { return "In " + { italiano: "Italian", tedesco: "German", francese: "French", spagnolo: "Spanish", portoghese: "Portuguese" }[m[1]] + ": " + m[2]; }],
+    [/^Già in raccolta ×(\d+)$/, function (m) { return "Already in collection ×" + m[1]; }],
+    [/^Nessuna carta nella raccolta corrisponde a “(.*)”\.$/, function (m) { return "No card in the collection matches “" + m[1] + "”."; }],
+    [/^(\d+) (versione|versioni), (\d+) (copia|copie)\. Confronta rarità, edizione e lingua prima di comprare\.$/, function (m) { return nw(m[1], m[2]) + ", " + nw(m[3], m[4]) + ". Compare rarity, edition and language before buying."; }],
+    [/^Hai già (\d+) (copia|copie) di questa versione \((.*)\)\. Se la registri, il totale sale a (\d+)\.$/, function (m) { return "You already have " + nw(m[1], m[2]) + " of this version (" + m[3] + "). If you register it, the total goes up to " + m[4] + "."; }],
+    [/^Hai già (\d+) (copia|copie) di questa versione: le copie verranno sommate\.$/, function (m) { return "You already have " + nw(m[1], m[2]) + " of this version: the copies will be added together."; }],
+    [/^Aggiungi copia \(totale (\d+)\)$/, function (m) { return "Add copy (total " + m[1] + ")"; }],
+    [/^e altre (\d+)…$/, function (m) { return "and " + m[1] + " more…"; }],
+    [/^(Registrata|Copia aggiunta): (.*)\. Ora ne hai (\d+)\.( La foto non è stata caricata\.)?$/, function (m) { return (m[1] === "Registrata" ? "Registered: " : "Copy added: ") + m[2] + ". You now have " + m[3] + "." + (m[4] ? " The photo was not uploaded." : ""); }],
+    [/^È già nella lista dei desideri: (.*)\.$/, function (m) { return "Already in the wishlist: " + m[1] + "."; }],
+    [/^Aggiunta ai desideri: (.*)\.( La foto non è stata caricata\.)?$/, function (m) { return "Added to the wishlist: " + m[1] + "." + (m[2] ? " The photo was not uploaded." : ""); }],
+    [/^Spostata nel raccoglitore: (.*)\. Ora ne hai (\d+)\.$/, function (m) { return "Moved to the collection: " + m[1] + ". You now have " + m[2] + "."; }],
+    [/^Modifiche salvate: (.*)\.$/, function (m) { return "Changes saved: " + m[1] + "."; }],
+    [/^Unita a una carta già presente(?:: ora ne hai (\d+))?\.$/, function (m) { return "Merged with a card already there" + (m[1] ? ": you now have " + m[1] : "") + "."; }],
+    [/^Rimossa: (.*)\.$/, function (m) { return "Removed: " + m[1] + "."; }],
+    [/^Importate (\d+) (riga|righe)(?:, (\d+) saltate)?\.$/, function (m) { return "Imported " + nw(m[1], m[2]) + (m[3] ? ", " + m[3] + " skipped" : "") + "."; }],
+    [/^Importo… (\d+) righe$/, function (m) { return "Importing… " + m[1] + " rows"; }],
+    [/^Importazione interrotta dopo (\d+) (riga|righe)\.$/, function (m) { return "Import stopped after " + nw(m[1], m[2]) + "."; }],
+    [/^Collegato a (.+?)(?:\. Ultima sincronizzazione: (.+?))?\.$/, function (m) { return "Connected to " + m[1] + (m[2] ? ". Last sync: " + m[2] : "") + "."; }],
+    [/^Sincronizzato il (.+) con (.+)\.$/, function (m) { return "Synced on " + m[1] + " with " + m[2] + "."; }],
+    [/^L'elenco è già l'ultimo disponibile \((.*)\)\.$/, function (m) { return "The list is already the latest available (" + m[1] + ")."; }],
+    [/^Elenco aggiornato al (.+?): (\+?)(-?\d+) (carta|carte), (\+?)(-?\d+) (espansione|espansioni)\.$/, function (m) { return "List updated on " + m[1] + ": " + m[2] + nw(m[3], m[4]) + ", " + m[5] + nw(m[6], m[7]) + "."; }],
+    [/^Scegli la stampa: (.*)$/, function (m) { return "Choose the print: " + m[1]; }],
+    [/^Nessuna stampa in (\w+): ti mostro tutte le lingue\.$/, function (m) { return "No print in " + m[1] + ": showing all languages."; }],
+    [/^Mostro le prime (\d+) di (\d+)\. Scrivi il codice per restringere\.$/, function (m) { return "Showing the first " + m[1] + " of " + m[2] + ". Type the code to narrow it down."; }]
+  ];
+  function trEn(s) {
+    if (Object.prototype.hasOwnProperty.call(EN, s)) return EN[s];
+    for (var i = 0; i < PAT.length; i++) { var m = PAT[i][0].exec(s); if (m) return PAT[i][1](m); }
+    return s;
+  }
+  var TR_ATTRS = ["placeholder", "aria-label", "title"], TR_SKIP = "script,style,[data-notr]";
+  var trTracked = new Set(), trOrig = new WeakMap(), trDone = new WeakMap(), trObs = null;
+  function trText(n) {
+    var p = n.parentNode;
+    if (!p || (p.closest && p.closest(TR_SKIP))) return;
+    var raw = n.nodeValue, key = raw.trim();
+    if (!key || (trOrig.has(n) && trDone.get(n) === raw)) return;
+    var en = trEn(key);
+    if (en === key) return;
+    var out = raw.replace(key, function () { return en; });
+    trOrig.set(n, raw); trDone.set(n, out); n.nodeValue = out; trTracked.add(n);
+  }
+  function trAttrs(el) {
+    if (el.closest && el.closest(TR_SKIP)) return;
+    TR_ATTRS.forEach(function (a) {
+      if (!el.hasAttribute(a)) return;
+      var v = el.getAttribute(a), st = el.__tr || (el.__tr = {});
+      if (st[a] && st[a].done === v) return;
+      var en = trEn(v.trim());
+      if (en === v.trim()) return;
+      st[a] = { orig: v, done: en }; el.setAttribute(a, en); trTracked.add(el);
+    });
+  }
+  function trWalk(root) {
+    if (root.nodeType === 3) { trText(root); return; }
+    if (root.nodeType !== 1) return;
+    trAttrs(root);
+    var w = document.createTreeWalker(root, 5), n;
+    while ((n = w.nextNode())) { if (n.nodeType === 3) trText(n); else trAttrs(n); }
+  }
+  function trOn() {
+    if (!trObs) {
+      trObs = new MutationObserver(function (recs) {
+        recs.forEach(function (r) {
+          if (r.type === "childList") Array.prototype.forEach.call(r.addedNodes, trWalk);
+          else if (r.type === "characterData") trText(r.target);
+          else if (r.type === "attributes") trAttrs(r.target);
+        });
+        trObs.takeRecords();
+      });
+    }
+    trWalk(document.body);
+    trObs.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+    trObs.takeRecords();
+  }
+  function trOff() {
+    if (trObs) trObs.disconnect();
+    trTracked.forEach(function (x) {
+      if (x.nodeType === 3) { if (trOrig.has(x) && x.nodeValue === trDone.get(x)) x.nodeValue = trOrig.get(x); }
+      else if (x.__tr) Object.keys(x.__tr).forEach(function (a) { var st = x.__tr[a]; if (x.getAttribute(a) === st.done) x.setAttribute(a, st.orig); });
+    });
+    trTracked.clear();
+  }
+  var UI = "it";
+  try { UI = localStorage.getItem(UI_KEY) || (/^it/i.test(navigator.language || "it") ? "it" : "en"); } catch (e) {}
+  if (UI !== "en") UI = "it";
+  function LOC() { return UI === "en" ? "en-GB" : "it-IT"; }
+  function setUI(l) {
+    UI = l === "en" ? "en" : "it";
+    try { localStorage.setItem(UI_KEY, UI); } catch (e) {}
+    document.documentElement.lang = UI;
+    $("ui-lang").value = UI;
+    if (UI === "en") trOn(); else trOff();
+    renderDbNote();
+    try { if (sync && sync.cfg) renderSyncUI(); } catch (e) {}
+    renderAll();
+  }
+  $("ui-lang").value = UI;
+  document.documentElement.lang = UI;
+  $("ui-lang").addEventListener("change", function () { setUI(this.value); });
+  if (UI === "en") trOn();
 
   init();
   loadDB().then(function (raw) {
