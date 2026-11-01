@@ -215,7 +215,6 @@ input::placeholder { color: var(--muted); opacity: .8; }
 .row:first-child { border-top: 0; }
 .main { min-width: 0; display: grid; gap: 6px; }
 .nm { font: 600 19px/1.2 var(--f-display); overflow-wrap: anywhere; }
-.alt { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
 .meta { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 2px 10px; }
 .code { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -245,12 +244,6 @@ button.thumb { cursor: pointer; }
 .step output.dupe { color: var(--gold); }
 .rm { border: 0; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 4px; min-height: 32px; }
 .rm.sure { color: var(--bad); font-weight: 600; }
-.rm[data-act="edit"] { color: var(--accent); font-weight: 600; }
-.act { display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: flex-end; }
-.edbox { justify-items: stretch; width: min(92vw, 440px); max-height: 92vh; overflow: auto; text-align: left; }
-.vbox.edbox h3 { text-align: left; }
-.edwarn { margin: 0; color: var(--bad); font-size: 14px; }
-.edwarn:empty { display: none; }
 .own { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--gold); padding-top: 2px; }
 @media (max-width: 520px) {
   .row { grid-template-columns: auto minmax(0, 1fr); }
@@ -463,54 +456,6 @@ button.thumb { cursor: pointer; }
   </div>
 </div>
 
-<div id="editor" class="viewer" hidden>
-  <form id="ed-form" class="vbox edbox" role="dialog" aria-modal="true" aria-labelledby="ed-title" autocomplete="off" novalidate>
-    <h3 id="ed-title">Modifica carta</h3>
-    <div>
-      <label for="ed-name">Nome della carta</label>
-      <input id="ed-name">
-    </div>
-    <div class="g2">
-      <div>
-        <label for="ed-code">Codice</label>
-        <input id="ed-code" class="mono" maxlength="24">
-      </div>
-      <div id="ed-qty-wrap">
-        <label for="ed-qty">Copie</label>
-        <input id="ed-qty" type="number" min="1" max="999" inputmode="numeric">
-      </div>
-    </div>
-    <div>
-      <label for="ed-set">Espansione</label>
-      <input id="ed-set" list="dl-set">
-    </div>
-    <div>
-      <label for="ed-rar">Rarità</label>
-      <input id="ed-rar" list="dl-rar">
-    </div>
-    <div class="g2">
-      <div>
-        <label for="ed-ed">Edizione</label>
-        <select id="ed-ed">
-          <option value="1st">1ª Edizione</option>
-          <option value="unl">Unlimited</option>
-          <option value="ltd">Limited</option>
-        </select>
-      </div>
-      <div>
-        <label for="ed-lang">Lingua</label>
-        <select id="ed-lang"></select>
-      </div>
-    </div>
-    <div id="ed-note" class="note" hidden></div>
-    <p id="ed-err" class="edwarn" role="alert"></p>
-    <div class="btns">
-      <button type="submit" id="ed-save" class="btn main-btn">Salva modifiche</button>
-      <button type="button" id="ed-cancel" class="btn ghost">Annulla</button>
-    </div>
-  </form>
-</div>
-
 
 <script>
 (function () {
@@ -593,7 +538,7 @@ button.thumb { cursor: pointer; }
     return (list || cards).filter(function (c) {
       if (compact(c.name).indexOf(cq) >= 0 || compact(c.code).indexOf(cq) >= 0 || norm(c.set).indexOf(nq) >= 0) return true;
       var p = pidOf(c);
-      return !!(p && pids[p]) || nameHit(c, q);
+      return p && pids[p];
     }).sort(byName);
   }
   function byName(a, b) {
@@ -650,7 +595,7 @@ button.thumb { cursor: pointer; }
     var gen = ++indexGen;
     DB = raw;
     nameN = []; nameW = []; codesC = []; cIdx = []; gIdx = []; eIdx = []; lIdx = [];
-    decoded = {}; pidCache = {}; candCache = {}; codeReady = false;
+    decoded = {}; pidCache = {}; codeReady = false;
     var n = DB.cards.length, i, k;
     nameMap = new Map(); pidMap = new Map();
     for (i = 0; i < n; i++) {
@@ -659,7 +604,7 @@ button.thumb { cursor: pointer; }
         var w = words(c[1][k]);
         if (w && !seen[w]) {
           seen[w] = 1; arr.push(w);
-          var lst = nameMap.get(w); if (!lst) nameMap.set(w, [i]); else if (lst.indexOf(i) < 0) lst.push(i);
+          nameMap.set(w, nameMap.has(w) && nameMap.get(w) !== i ? -1 : i);
         }
       }
       nameN.push(arr);
@@ -775,40 +720,20 @@ button.thumb { cursor: pointer; }
     }
     return out;
   }
-  var pidCache = {}, candCache = {};
-  /* Carte dell'elenco a cui può corrispondere una carta registrata: per password, per codice o per nome (anche ambiguo). */
-  function candidatesOf(c) {
-    if (dbState !== "ready") return [];
-    if (c.pid && pidMap.has(c.pid)) return [pidMap.get(c.pid)];
-    var key = (c.code || "") + "|" + (c.name || "");
-    if (codeReady && key in candCache) return candCache[key];
-    var out = [], cc = (c.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (cc && codeReady && codeMap.has(cc)) out = [cIdx[codeMap.get(cc)]];
-    else if (c.name) out = nameMap.get(words(c.name)) || [];
-    if (codeReady) candCache[key] = out;
-    return out;
-  }
+  var pidCache = {};
   function pidOf(c) {
     if (c.pid) return c.pid;
-    var cand = candidatesOf(c);
-    return cand.length === 1 ? (DB.cards[cand[0]][0] || 0) : 0;
-  }
-  /* La carta registrata ha, in qualunque lingua, un nome che corrisponde alla ricerca? */
-  function nameHit(c, q) {
-    var nq = words(q);
-    if (nq.length < 2) return false;
-    var toks = nq.split(" ");
-    return candidatesOf(c).some(function (ci) {
-      return nameN[ci].some(function (s) { return scoreName(s, nq, toks) < 9; });
-    });
-  }
-  function altHTML(c) {
-    var cand = candidatesOf(c);
-    if (cand.length !== 1) return "";
-    var names = DB.cards[cand[0]][1];
-    var other = c.lang === "IT" ? names[0] : names[1];
-    if (!other || compact(other) === compact(c.name)) return "";
-    return '<div class="alt">' + (c.lang === "IT" ? "In inglese: " : "In italiano: ") + esc(other) + "</div>";
+    if (dbState !== "ready") return 0;
+    var key = (c.code || "") + "|" + (c.name || "");
+    if (key in pidCache) return pidCache[key];
+    var p = 0, cc = (c.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (cc && codeReady && codeMap.has(cc)) p = DB.cards[cIdx[codeMap.get(cc)]][0] || 0;
+    if (!p && c.name) {
+      var ci = nameMap.get(words(c.name));
+      if (ci != null && ci >= 0) p = DB.cards[ci][0] || 0;
+    }
+    pidCache[key] = p;
+    return p;
   }
   function resolvePid(d) {
     if (d.pid) return d.pid;
@@ -1021,24 +946,6 @@ button.thumb { cursor: pointer; }
             .then(function () { return { existed: false }; });
         });
       },
-      update: function (kind, id, d) {
-        var col = cols[kind], nid = makeId(d), now = Date.now();
-        var fields = { name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, pid: d.pid || 0, updated: now };
-        if (kind === "cards") fields.qty = d.qty;
-        if (nid === id) return col.doc(id).update(fields).then(function () { return { id: id, merged: false }; });
-        var old = listFor(kind).filter(function (c) { return c.id === id; })[0] || {};
-        var ref = col.doc(nid);
-        return ref.get().then(function (snap) {
-          if (snap.exists) {
-            var cur = snap.data(), patch = { updated: now }, qty = 0;
-            if (kind === "cards") { qty = (Number(cur.qty) || 0) + (Number(d.qty) || 1); patch.qty = qty; }
-            if (!cur.img && old.img) patch.img = old.img;
-            return ref.update(patch).then(function () { return { id: nid, merged: true, qty: qty }; });
-          }
-          var doc = Object.assign({}, fields, { img: old.img || "" });
-          return ref.set(doc).then(function () { return { id: nid, merged: false }; });
-        }).then(function (res) { return col.doc(id).delete().then(function () { return res; }); });
-      },
       setQty: function (id, qty) { return cols.cards.doc(id).update({ qty: qty, updated: Date.now() }); },
       setImg: function (kind, id, img) { return cols[kind].doc(id).update({ img: img || "", updated: Date.now() }); },
       remove: function (kind, id) { return cols[kind].doc(id).delete(); }
@@ -1097,30 +1004,6 @@ button.thumb { cursor: pointer; }
       lists[kind] = lists[kind].filter(function (c) { return c.id !== id; });
       lists.tomb[kind + ":" + id] = Date.now();
       push(kind); return Promise.resolve();
-    };
-    api.update = function (kind, id, d) {
-      var list = lists[kind], now = Date.now();
-      var old = list.filter(function (c) { return c.id === id; })[0];
-      if (!old) return Promise.resolve({ id: id, merged: false });
-      var nid = makeId(d);
-      var fields = { name: d.name, code: d.code, set: d.set, rarity: d.rarity, edition: d.edition, lang: d.lang, pid: d.pid || 0, updated: now };
-      if (kind === "cards") fields.qty = d.qty;
-      if (nid === id) { Object.assign(old, fields); push(kind); return Promise.resolve({ id: id, merged: false }); }
-      var tgt = list.filter(function (c) { return c.id === nid; })[0];
-      lists[kind] = list.filter(function (c) { return c.id !== id; });
-      lists.tomb[kind + ":" + id] = now;
-      if (tgt) {
-        var qty = 0;
-        if (kind === "cards") { tgt.qty = (Number(tgt.qty) || 0) + (Number(d.qty) || 1); qty = tgt.qty; }
-        if (!tgt.img && old.img) tgt.img = old.img;
-        tgt.updated = now;
-        push(kind);
-        return Promise.resolve({ id: nid, merged: true, qty: qty });
-      }
-      delete lists.tomb[kind + ":" + nid];
-      lists[kind].push(Object.assign({}, old, fields, { id: nid }));
-      push(kind);
-      return Promise.resolve({ id: nid, merged: false });
     };
     api.getState = function () { return JSON.parse(JSON.stringify(lists)); };
     api.setState = function (st) {
@@ -1278,13 +1161,12 @@ button.thumb { cursor: pointer; }
     var key = kind + ":" + c.id;
     var sure = pendingDel === key;
     var rm = '<button type="button" class="rm' + (sure ? " sure" : "") + '" data-act="del" data-kind="' + kind + '" data-id="' + esc(c.id) + '">' + (sure ? "Conferma rimozione" : "Rimuovi") + '</button>';
-    var acts = '<div class="act"><button type="button" class="rm" data-act="edit" data-kind="' + kind + '" data-id="' + esc(c.id) + '">Modifica</button>' + rm + '</div>';
     if (kind === "cards") {
       if (actions && !readOnly) {
         side = '<div class="side"><div class="step" role="group" aria-label="Copie di ' + esc(c.name || c.code) + '">' +
           '<button type="button" data-act="dec" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in meno"' + (qty <= 1 ? " disabled" : "") + '>−</button>' +
           '<output class="' + (qty > 1 ? "dupe" : "") + '">' + qty + '</output>' +
-          '<button type="button" data-act="inc" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in più">+</button></div>' + acts + '</div>';
+          '<button type="button" data-act="inc" data-kind="cards" data-id="' + esc(c.id) + '" aria-label="Una copia in più">+</button></div>' + rm + '</div>';
       } else {
         side = '<div class="own" title="Copie possedute">×' + qty + '</div>';
       }
@@ -1293,12 +1175,12 @@ button.thumb { cursor: pointer; }
         var own = findExact(c, cards);
         if (own) extra = '<span class="chip warn">Già in raccolta ×' + (Number(own.qty) || 1) + '</span>';
         else if (related(c, cards).length) extra = '<span class="chip soft">Hai altre versioni</span>';
-        side = readOnly ? "" : '<div class="side"><button type="button" class="btn small" data-act="bought" data-kind="wishlist" data-id="' + esc(c.id) + '">Comprata</button>' + acts + '</div>';
+        side = readOnly ? "" : '<div class="side"><button type="button" class="btn small" data-act="bought" data-kind="wishlist" data-id="' + esc(c.id) + '">Comprata</button>' + rm + '</div>';
       } else {
         side = '<div><span class="chip soft">Desiderata</span></div>';
       }
     }
-    return '<li class="row">' + thumbHTML(c, kind, actions) + '<div class="main"><div class="nm">' + esc(c.name || c.code) + '</div>' + altHTML(c) +
+    return '<li class="row">' + thumbHTML(c, kind, actions) + '<div class="main"><div class="nm">' + esc(c.name || c.code) + '</div>' +
       (meta ? '<div class="meta">' + meta + '</div>' : "") +
       '<div class="chips">' + chipsHTML(c) + extra + '</div></div>' + side + '</li>';
   }
@@ -1339,7 +1221,7 @@ button.thumb { cursor: pointer; }
     }
   }
   function filtered() {
-    var fqRaw = $("fq").value, q = norm(fqRaw), cq = compact(fqRaw);
+    var q = norm($("fq").value), cq = compact($("fq").value);
     var fr = $("fr").value, fe = $("fe").value, fl = $("fl").value, fs = $("fs").value, fd = $("fd").checked;
     var rows = cards.filter(function (c) {
       if (fr && c.rarity !== fr) return false;
@@ -1347,7 +1229,7 @@ button.thumb { cursor: pointer; }
       if (fl && c.lang !== fl) return false;
       if (fs && c.set !== fs) return false;
       if (fd && (Number(c.qty) || 0) < 2) return false;
-      if (q && compact(c.name).indexOf(cq) < 0 && compact(c.code).indexOf(cq) < 0 && norm(c.set).indexOf(q) < 0 && !nameHit(c, fqRaw)) return false;
+      if (q && compact(c.name).indexOf(cq) < 0 && compact(c.code).indexOf(cq) < 0 && norm(c.set).indexOf(q) < 0) return false;
       return true;
     });
     var o = $("fo").value;
@@ -1665,76 +1547,6 @@ button.thumb { cursor: pointer; }
     $("v-img").removeAttribute("src");
   }
 
-  /* ---------- modifica di una carta registrata ---------- */
-  var editing = null;
-  function readEditor() {
-    var q = parseInt($("ed-qty").value, 10);
-    if (!(q >= 1)) q = 1;
-    return {
-      name: $("ed-name").value.trim().replace(/\s+/g, " "),
-      code: $("ed-code").value.trim().toUpperCase().replace(/\s+/g, ""),
-      set: $("ed-set").value.trim().replace(/\s+/g, " "),
-      rarity: canonRarity($("ed-rar").value.trim()),
-      edition: $("ed-ed").value,
-      lang: $("ed-lang").value,
-      qty: Math.min(q, 999)
-    };
-  }
-  function edCheck() {
-    if (!editing) return;
-    var d = readEditor(), nid = makeId(d), note = $("ed-note");
-    if (d.rarity && nid !== editing.id) {
-      var tgt = listFor(editing.kind).filter(function (c) { return c.id === nid; })[0];
-      if (tgt) {
-        note.className = "note warn";
-        note.innerHTML = editing.kind === "cards"
-          ? '<span class="lbl">Già presente</span><span>Hai già ' + plural(Number(tgt.qty) || 1, "copia", "copie") + " di questa versione: le copie verranno sommate.</span>"
-          : '<span class="lbl">Già presente</span><span>Questa versione è già nella lista dei desideri: verranno unite.</span>';
-        note.hidden = false;
-        return;
-      }
-    }
-    note.hidden = true; note.innerHTML = "";
-  }
-  function openEditor(kind, id) {
-    var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
-    if (!c) return;
-    editing = { kind: kind, id: id, item: c };
-    $("ed-title").textContent = "Modifica: " + (c.name || c.code);
-    $("ed-name").value = c.name; $("ed-code").value = c.code; $("ed-set").value = c.set; $("ed-rar").value = c.rarity;
-    $("ed-ed").value = c.edition; $("ed-lang").value = c.lang;
-    $("ed-qty").value = Number(c.qty) || 1;
-    $("ed-qty-wrap").hidden = kind !== "cards";
-    $("ed-err").textContent = "";
-    edCheck();
-    $("editor").hidden = false;
-    $("ed-ed").focus();
-  }
-  function closeEditor() { editing = null; $("editor").hidden = true; }
-  ["ed-name", "ed-code", "ed-set", "ed-rar", "ed-ed", "ed-lang", "ed-qty"].forEach(function (id) {
-    $(id).addEventListener("input", edCheck);
-    $(id).addEventListener("change", edCheck);
-  });
-  $("ed-cancel").addEventListener("click", closeEditor);
-  $("editor").addEventListener("mousedown", function (e) { if (e.target === this) closeEditor(); });
-  $("ed-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (!editing || readOnly || !repo) return;
-    var ed = editing, o = ed.item, d = readEditor(), err = $("ed-err");
-    if (!d.name) { err.textContent = "Scrivi il nome della carta."; $("ed-name").focus(); return; }
-    if (!d.rarity) { err.textContent = "Scegli la rarità della carta."; $("ed-rar").focus(); return; }
-    d.img = o.img || "";
-    var same = norm(d.name) === norm(o.name) && compact(d.code) === compact(o.code);
-    d.pid = same ? (o.pid || pidOf(o)) : pidOf({ code: d.code, name: d.name });
-    $("ed-save").disabled = true;
-    enqueue(function () { return repo.update(ed.kind, ed.id, d); }).then(function (res) {
-      closeEditor();
-      say(res.merged ? "Unita a una carta già presente" + (res.qty ? ": ora ne hai " + res.qty : "") + "." : "Modifiche salvate: " + d.name + ".", "ok");
-    }).catch(function () {
-      err.textContent = "Non sono riuscito a salvare. Riprova.";
-    }).then(function () { $("ed-save").disabled = false; });
-  });
-
   /* ---------- eventi ---------- */
   function onFormChange() { renderDupe(); }
   ["f-name", "f-code", "f-qty", "f-set", "f-rar", "f-ed", "f-lang"].forEach(function (id) {
@@ -1844,7 +1656,6 @@ button.thumb { cursor: pointer; }
     var c = listFor(kind).filter(function (x) { return x.id === id; })[0];
     if (!c) return;
     if (act === "view") { openViewer(kind, id); return; }
-    if (act === "edit") { if (!readOnly && repo) openEditor(kind, id); return; }
     if (readOnly || !repo) return;
     if (act === "photo") { pickTarget = { kind: kind, id: id }; $("pick").click(); return; }
     var qty = Number(c.qty) || 1;
@@ -1889,10 +1700,7 @@ button.thumb { cursor: pointer; }
   });
   $("v-close").addEventListener("click", closeViewer);
   $("viewer").addEventListener("click", function (e) { if (e.target === this) closeViewer(); });
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && viewing) closeViewer();
-    else if (e.key === "Escape" && editing) closeEditor();
-  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && viewing) closeViewer(); });
   $("v-change").addEventListener("click", function () {
     if (!viewing) return;
     pickTarget = { kind: viewing.kind, id: viewing.id };
@@ -2180,7 +1988,6 @@ button.thumb { cursor: pointer; }
 
   /* ---------- avvio ---------- */
   function renderAll() {
-    if (editing && !listFor(editing.kind).some(function (c) { return c.id === editing.id; })) closeEditor();
     if (viewing && !listFor(viewing.kind).some(function (c) { return c.id === viewing.id && c.img; })) closeViewer();
     $("photo-row").hidden = !(photoOK && !readOnly);
     renderStats(); renderFilterOptions(); renderList(); renderCheck(); renderDupe();
@@ -2188,7 +1995,6 @@ button.thumb { cursor: pointer; }
   function init() {
     $("f-lang").innerHTML = LANGS.map(function (l) { return '<option value="' + l[0] + '">' + l[0] + " · " + l[1] + "</option>"; }).join("");
     $("f-lang").value = "IT";
-    $("ed-lang").innerHTML = $("f-lang").innerHTML;
     $("dl-rar").innerHTML = RARITIES.map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
     renderDbNote();
     renderAll();
