@@ -48,9 +48,9 @@ jobs:
               sys.exit(1)
           x = sel[0]
           sys.stderr.write("Elemento trovato (chiavi): %s\n" % sorted(x.keys()))
-          url = next((v for k, v in x.items() if isinstance(v, str) and v.startswith("http") and v.endswith(".json")), None)
+          url = next((v for k, v in x.items() if isinstance(v, str) and v.startswith("http") and "download" in k), None) or next((v for k, v in x.items() if isinstance(v, str) and v.startswith("http") and v.endswith((".json", ".jsonl", ".gz"))), None)
           if not url:
-              sys.stderr.write("Nessun indirizzo .json nell'elemento: %s\n" % json.dumps(x)[:600])
+              sys.stderr.write("Nessun indirizzo di download nell'elemento: %s\n" % json.dumps(x)[:600])
               sys.exit(1)
           day = str(x.get("updated_at") or x.get("updated") or "")[:10] or "0000-00-00"
           print("URL=" + url)
@@ -58,7 +58,26 @@ jobs:
           PY
           . "$RUNNER_TEMP/bulk.env"
           echo "Scarico $URL"
-          curl -fsS -H "$H1" -H "$H2" -o "$RUNNER_TEMP/scryfall.json" "$URL"
+          curl -fsS -H "$H1" -H "$H2" -o "$RUNNER_TEMP/scryfall.dl" "$URL"
+          python3 - "$RUNNER_TEMP/scryfall.dl" "$RUNNER_TEMP/scryfall.json" <<'PY'
+          import sys, json, gzip
+          src, dst = sys.argv[1], sys.argv[2]
+          raw = open(src, "rb").read(2)
+          op = gzip.open if raw == b"\x1f\x8b" else open
+          keep = ("id", "name", "set", "set_name", "collector_number", "rarity", "lang", "layout", "digital")
+          out = []
+          with op(src, "rt", encoding="utf8") as f:
+              head = f.read(1)
+              f.seek(0)
+              if head == "[":
+                  items = json.load(f)
+              else:
+                  items = (json.loads(l) for l in f if l.strip())
+              for c in items:
+                  out.append({k: c.get(k) for k in keep})
+          json.dump(out, open(dst, "w", encoding="utf8"))
+          print("Carte lette:", len(out))
+          PY
           python3 tools/make_mtg_db.py "$RUNNER_TEMP/scryfall.json" magic.json "$D"
 
       - name: Salva solo se ci sono novità
