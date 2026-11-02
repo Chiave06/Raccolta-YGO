@@ -670,18 +670,18 @@ button.thumb { cursor: pointer; }
   }
   function prefLang() { return $("f-lang").value || "IT"; }
   /* nome da mostrare: con il sito in inglese, il nome inglese della carta (quello salvato resta nella lingua della stampa) */
-  function showName(ci, lang) { return UI === "en" ? DB.cards[ci][1][0] : nameIn(ci, lang); }
+  function showName(ci) { var n = DB.cards[ci][1]; return UI === "en" ? n[0] : (n[1] || n[0]); }
   function dispName(c) {
-    if (UI === "en" && dbState === "ready") {
+    if (dbState === "ready") {
       var cand = candidatesOf(c);
-      if (cand.length === 1 && DB.cards[cand[0]][1][0]) return DB.cards[cand[0]][1][0];
+      if (cand.length === 1 && showName(cand[0])) return showName(cand[0]);
     }
     return c.name || c.code;
   }
   function canonName(d) {
     if (dbState !== "ready" || !d.pid || !pidMap.has(d.pid)) return;
     var ci = pidMap.get(d.pid), k = compact(d.name);
-    if (DB.cards[ci][1].some(function (x) { return x && compact(x) === k; })) d.name = nameIn(ci, d.lang);
+    if (DB.cards[ci][1].some(function (x) { return x && compact(x) === k; })) d.name = showName(ci);
   }
 
   function buildIndex(raw) {
@@ -852,9 +852,11 @@ button.thumb { cursor: pointer; }
       if (!lbl || !own || compact(own) === compact(names[0])) return "";
       return '<div class="alt">In ' + lbl + ": " + esc(own) + "</div>";
     }
-    var other = c.lang === "IT" ? names[0] : names[1];
-    if (!other || compact(other) === compact(c.name)) return "";
-    return '<div class="alt">' + (c.lang === "IT" ? "In inglese: " : "In italiano: ") + esc(other) + "</div>";
+    var main = showName(cand[0]), ownIt = nameIn(cand[0], c.lang);
+    var lbl = c.lang === "IT" ? "inglese" : ({ EN: "inglese", DE: "tedesco", FR: "francese", ES: "spagnolo", PT: "portoghese" }[c.lang]);
+    var other = c.lang === "IT" ? names[0] : ownIt;
+    if (!lbl || !other || compact(other) === compact(main)) return "";
+    return '<div class="alt">In ' + lbl + ": " + esc(other) + "</div>";
   }
   function resolvePid(d) {
     if (d.pid) return d.pid;
