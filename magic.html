@@ -258,6 +258,21 @@ button.thumb { cursor: pointer; }
 .vbox.edbox h3 { text-align: left; }
 .edwarn { margin: 0; color: var(--bad); font-size: 14px; }
 .edwarn:empty { display: none; }
+.vbox.bulkbox { justify-items: stretch; width: min(96vw, 780px); max-height: 94vh; overflow: auto; text-align: left; max-width: none; }
+.vbox.bulkbox h3 { text-align: left; }
+.bk-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.bk-top .bk-set { grid-column: 1 / -1; }
+.bk-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.bk-bar input[type="search"] { flex: 1 1 200px; min-width: 0; }
+.bk-list { border: 1px solid var(--line); border-radius: 8px; max-height: 42vh; overflow: auto; background: var(--bg, transparent); }
+.bk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.bk-row[hidden] { display: none; }
+.bk-row:last-child { border-bottom: 0; }
+.bk-row input[type="checkbox"] { width: 20px; height: 20px; flex: none; min-height: 0; }
+.bk-nm { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; }
+.bk-own { color: var(--warn); font-size: 13px; font-weight: 600; }
+.bk-n { width: 64px; min-height: 34px; padding: 0 6px; }
+.bk-rin { width: 130px; min-height: 34px; padding: 0 8px; }
 .own { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--gold); padding-top: 2px; }
 @media (max-width: 520px) {
   .row { grid-template-columns: auto minmax(0, 1fr); }
@@ -378,6 +393,7 @@ button.thumb { cursor: pointer; }
         <div class="btns">
           <button id="f-btn" class="btn main-btn" type="submit">Aggiungi alla raccolta</button>
           <button id="f-wish" class="btn ghost" type="button">Aggiungi ai desideri</button>
+          <button id="bk-open" class="btn ghost" type="button">Aggiungi da un'espansione</button>
         </div>
         <p id="status" role="status"></p>
       </form>
@@ -520,6 +536,31 @@ button.thumb { cursor: pointer; }
   </form>
 </div>
 
+<div id="bulk" class="viewer" hidden>
+  <div class="vbox bulkbox" role="dialog" aria-modal="true" aria-labelledby="bk-title">
+    <h3 id="bk-title">Aggiunta da un'espansione</h3>
+    <div class="bk-top">
+      <div class="bk-set"><label for="bk-set">Espansione</label><input id="bk-set" list="dl-set" autocomplete="off"></div>
+      <div><label for="bk-lang">Lingua</label><select id="bk-lang"></select></div>
+      <div><label for="bk-ed">Edizione</label><select id="bk-ed"><option value="unl">Unlimited</option></select></div>
+      <div><label for="bk-to">Aggiungi a</label><select id="bk-to"><option value="cards">Raccoglitore</option><option value="wishlist">Da comprare</option></select></div>
+    </div>
+    <div class="bk-bar">
+      <input id="bk-q" type="search" placeholder="Filtra per nome o codice" aria-label="Filtra per nome o codice">
+      <label class="tog"><input id="bk-all" type="checkbox"> Tutte le lingue</label>
+      <button id="bk-selall" type="button" class="btn ghost small">Seleziona tutte</button>
+      <button id="bk-none" type="button" class="btn ghost small">Nessuna</button>
+    </div>
+    <p id="bk-info" class="hint"></p>
+    <div id="bk-list" class="bk-list" role="list"></div>
+    <p id="bk-err" class="edwarn" role="alert"></p>
+    <div class="btns">
+      <button id="bk-go" type="button" class="btn main-btn" disabled>Aggiungi</button>
+      <button id="bk-close" type="button" class="btn ghost">Chiudi</button>
+    </div>
+  </div>
+</div>
+
 
 <script>window.GAME_CFG={"id": "mtg", "nav": [["./", "Yu-Gi-Oh!", "ygo"], ["pokemon.html", "Pokémon", "pkm"], ["magic.html", "Magic", "mtg"]], "dbFile": "magic.json", "ls": "mtg-raccolta-v1", "collFile": "collection-mtg.json", "colCards": "mtg_cards", "colWish": "mtg_wishlist", "csv": "magic", "art": "mtg", "defLang": "EN", "rarities": ["Common", "Uncommon", "Rare", "Mythic Rare", "Special", "Bonus"], "langs": [["IT", "Italiano"], ["EN", "Inglese"], ["DE", "Tedesco"], ["FR", "Francese"], ["ES", "Spagnolo"], ["PT", "Portoghese"], ["JP", "Giapponese"], ["KR", "Coreano"], ["SC", "Cinese semplificato"], ["TC", "Cinese tradizionale"], ["RU", "Russo"]], "lorder": ["EN", "IT", "DE", "FR", "ES", "PT", "JP", "KR", "SC", "TC", "RU"], "langNames": {"italiano": "IT", "inglese": "EN", "english": "EN", "tedesco": "DE", "german": "DE", "francese": "FR", "french": "FR", "spagnolo": "ES", "spanish": "ES", "portoghese": "PT", "portuguese": "PT", "giapponese": "JP", "japanese": "JP", "coreano": "KR", "korean": "KR", "cinese": "SC", "chinese": "SC", "cinese semplificato": "SC", "cinese tradizionale": "TC", "russo": "RU", "russian": "RU"}, "defmark": {"EN": "", "IT": "", "DE": "", "FR": "", "ES": "", "PT": "", "JP": "", "KR": "", "SC": "", "TC": "", "RU": ""}, "codeLang": {}, "nameidx": {"EN": 0}, "editions": {"unl": "Non foil", "1st": "Foil", "ltd": "Etched foil"}, "edshort": {"1st": "FOIL", "unl": "NON FOIL", "ltd": "ETCHED"}, "text": {"title": "Raccolta Magic", "tag": "Tutte le tue carte Magic: The Gathering con immagini, rarità, espansione, finitura e lingua. Controlla qui prima di comprare.", "name": "Lightning Bolt", "code": "2XM-117", "set": "Double Masters", "rar": "Rare", "q": "Nome o codice, es. Lightning Bolt o 2XM-117", "edLabel": "Finitura"}, "en": {"Cinese semplificato": "Simplified Chinese", "Cinese tradizionale": "Traditional Chinese", "Russo": "Russian", "SC · Cinese semplificato": "SC · Simplified Chinese", "TC · Cinese tradizionale": "TC · Traditional Chinese", "RU · Russo": "RU · Russian", "Raccolta Magic": "Magic Collection", "Tutte le tue carte Magic: The Gathering con immagini, rarità, espansione, finitura e lingua. Controlla qui prima di comprare.": "All your Magic: The Gathering cards with images, rarity, set, finish and language. Check here before you buy.", "Nome o codice, es. Lightning Bolt o 2XM-117": "Name or code, e.g. Lightning Bolt or 2XM-117", "Finitura": "Finish", "Non foil": "Non-foil", "Etched foil": "Etched foil", "NON FOIL": "NON-FOIL", "Elenco carte non disponibile. Puoi inserire le carte a mano. L'elenco si crea con l'aggiornamento automatico su GitHub.": "Card list not available. You can enter cards by hand. The list is created by the automatic update on GitHub."}};</script>
 <script>
@@ -553,9 +594,9 @@ button.thumb { cursor: pointer; }
     if (T.title) { document.title = T.title; $("h-title").textContent = T.title; }
     if (T.tag) document.querySelector(".tag").textContent = T.tag;
     set("f-name", "name"); set("f-code", "code"); set("f-set", "set"); set("f-rar", "rar"); set("q", "q");
-    if (T.edLabel) { var l1 = document.querySelector('label[for="f-ed"]'), l2 = document.querySelector('label[for="ed-ed"]'); if (l1) l1.textContent = T.edLabel; if (l2) l2.textContent = T.edLabel; }
+    if (T.edLabel) { ['f-ed', 'ed-ed', 'bk-ed'].forEach(function (id) { var l = document.querySelector('label[for="' + id + '"]'); if (l) l.textContent = T.edLabel; }); }
     var opts = Object.keys(EDITIONS).map(function (k) { return '<option value="' + k + '"' + (k === "unl" ? " selected" : "") + ">" + EDITIONS[k] + "</option>"; }).join("");
-    $("f-ed").innerHTML = opts; $("ed-ed").innerHTML = opts;
+    $("f-ed").innerHTML = opts; $("ed-ed").innerHTML = opts; $("bk-ed").innerHTML = opts;
     var nav = G.nav || [["index.html", "Yu-Gi-Oh!", "ygo"], ["pokemon.html", "Pokémon", "pkm"], ["magic.html", "Magic", "mtg"]], cur = G.id || "ygo";
     $("games").innerHTML = nav.map(function (n) { return '<a href="' + n[0] + '"' + (n[2] === cur ? ' aria-current="page"' : "") + ">" + n[1] + "</a>"; }).join("");
   })();
@@ -1801,6 +1842,164 @@ button.thumb { cursor: pointer; }
     }).then(function () { $("ed-save").disabled = false; });
   });
 
+  /* ---------- aggiunta di massa da un'espansione ---------- */
+  var bulk = { open: false, rows: [], si: -1 };
+  function bkSetIndex() {
+    if (dbState !== "ready") return -1;
+    var n = norm($("bk-set").value);
+    if (!n) return -1;
+    for (var i = 0; i < DB.sets.length; i++) if (norm(DB.sets[i]) === n) return i;
+    return -1;
+  }
+  function bkCollect(si, lang, all) {
+    var out = [];
+    for (var ci = 0; ci < DB.cards.length; ci++) {
+      var gs = DB.cards[ci][2];
+      for (var gi = 0; gi < gs.length; gi++) {
+        var g = gs[gi];
+        if (g[0] !== si) continue;
+        var ents = g[3].split(" ");
+        for (var k = 0; k < ents.length; k++) {
+          var e = parseEnt(ents[k]);
+          if (!all && e.lang !== lang) continue;
+          var code = g[1] ? g[1] + "-" + e.marker + g[2] : g[2];
+          var rids = DB.rs[e.rs] || [];
+          if (!rids.length) out.push({ ci: ci, g: g, lang: e.lang, code: code, rar: "" });
+          else rids.forEach(function (r) { out.push({ ci: ci, g: g, lang: e.lang, code: code, rar: DB.rar[r] }); });
+        }
+      }
+    }
+    out.sort(function (a, b) { return a.code.localeCompare(b.code, "en", { numeric: true }) || a.lang.localeCompare(b.lang); });
+    return out;
+  }
+  function bkItem(r, qty, rar) {
+    return { name: showName(r.ci), code: r.code.toUpperCase(), set: DB.sets[r.g[0]], rarity: canonRarity(rar || r.rar), edition: $("bk-ed").value, lang: r.lang, qty: qty, img: "", pid: r.g[4] || DB.cards[r.ci][0] || 0 };
+  }
+  function bkRender() {
+    var list = $("bk-list"), info = $("bk-info");
+    $("bk-err").textContent = "";
+    bulk.si = bkSetIndex();
+    bulk.rows = [];
+    list.innerHTML = "";
+    if (dbState !== "ready") { info.textContent = "L'elenco delle carte non è disponibile: per l'aggiunta di massa serve l'elenco."; bkCount(); return; }
+    if (bulk.si < 0) { info.textContent = "Scegli un'espansione dall'elenco."; bkCount(); return; }
+    var rows = bkCollect(bulk.si, $("bk-lang").value, $("bk-all").checked);
+    bulk.rows = rows;
+    if (!rows.length) { info.textContent = "Nessuna stampa in questa lingua: prova un'altra lingua o spunta “Tutte le lingue”."; bkCount(); return; }
+    info.textContent = plural(rows.length, "stampa", "stampe") + " in questa espansione. Spunta quelle che hai.";
+    list.innerHTML = rows.map(function (r, i) {
+      return '<label class="bk-row" data-i="' + i + '" role="listitem"><input type="checkbox" class="bk-ck" data-i="' + i + '">' +
+        '<span class="code">' + esc(r.code) + '</span><span class="bk-nm">' + esc(showName(r.ci)) + "</span>" +
+        (r.rar ? '<span class="chip r ' + rcls(r.rar) + '">' + esc(r.rar) + "</span>" : '<input class="bk-rin" data-i="' + i + '" placeholder="Rarità" aria-label="Rarità" list="dl-rar">') +
+        ($("bk-all").checked ? '<span class="chip lang">' + esc(r.lang) + "</span>" : "") +
+        '<span class="bk-own" data-i="' + i + '"></span>' +
+        '<input type="number" class="bk-n" data-i="' + i + '" min="1" max="999" value="1" aria-label="Copie" hidden></label>';
+    }).join("");
+    bkFilter(); bkMarkOwned(); bkCount();
+  }
+  function bkMarkOwned() {
+    if (!bulk.open || !bulk.rows.length) return;
+    var to = $("bk-to").value, pool = listFor(to);
+    Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-own"), function (sp) {
+      var r = bulk.rows[+sp.getAttribute("data-i")];
+      if (!r || !r.rar) { sp.textContent = ""; return; }
+      var id = makeId(bkItem(r, 1)), c = pool.filter(function (x) { return x.id === id; })[0];
+      sp.textContent = c ? (to === "cards" ? "Già ×" + (Number(c.qty) || 1) : "Già nei desideri") : "";
+    });
+  }
+  function bkFilter() {
+    var q = words($("bk-q").value);
+    Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-row"), function (row) {
+      var r = bulk.rows[+row.getAttribute("data-i")];
+      var hay = words(r.code + " " + DB.cards[r.ci][1].join(" "));
+      row.hidden = !!q && q.split(" ").some(function (t) { return hay.indexOf(t) < 0; });
+    });
+  }
+  function bkChecked() {
+    return Array.prototype.filter.call($("bk-list").querySelectorAll(".bk-ck"), function (c) { return c.checked; });
+  }
+  function bkCount() {
+    var n = bkChecked().length, b = $("bk-go");
+    b.textContent = n ? "Aggiungi " + plural(n, "carta", "carte") : "Aggiungi";
+    b.disabled = !n;
+  }
+  function openBulk() {
+    if (readOnly || !repo) return;
+    $("bk-lang").value = $("f-lang").value; $("bk-ed").value = $("f-ed").value;
+    $("bk-set").value = $("f-set").value;
+    bulk.open = true; $("bulk").hidden = false;
+    bkRender();
+    $("bk-set").focus();
+  }
+  function closeBulk() { bulk.open = false; $("bulk").hidden = true; }
+  $("bk-open").addEventListener("click", openBulk);
+  $("bk-close").addEventListener("click", closeBulk);
+  $("bulk").addEventListener("mousedown", function (e) { if (e.target === this) closeBulk(); });
+  ["bk-set", "bk-lang", "bk-all"].forEach(function (id) { $(id).addEventListener("change", bkRender); });
+  $("bk-set").addEventListener("input", function () { if (bkSetIndex() !== bulk.si) bkRender(); });
+  $("bk-ed").addEventListener("change", bkMarkOwned);
+  $("bk-to").addEventListener("change", bkMarkOwned);
+  $("bk-q").addEventListener("input", bkFilter);
+  $("bk-selall").addEventListener("click", function () {
+    Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-row"), function (row) {
+      if (row.hidden) return;
+      var c = row.querySelector(".bk-ck"); c.checked = true; row.querySelector(".bk-n").hidden = $("bk-to").value !== "cards";
+    });
+    bkCount();
+  });
+  $("bk-none").addEventListener("click", function () {
+    Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-ck"), function (c) { c.checked = false; });
+    Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-n"), function (n) { n.hidden = true; });
+    bkCount();
+  });
+  $("bk-list").addEventListener("change", function (e) {
+    if (e.target.classList.contains("bk-ck")) {
+      var n = e.target.closest(".bk-row").querySelector(".bk-n");
+      n.hidden = !e.target.checked || $("bk-to").value !== "cards";
+      bkCount();
+    }
+  });
+  $("bk-to").addEventListener("change", function () {
+    Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-row"), function (row) {
+      row.querySelector(".bk-n").hidden = !row.querySelector(".bk-ck").checked || $("bk-to").value !== "cards";
+    });
+  });
+  $("bk-go").addEventListener("click", function () {
+    if (readOnly || !repo) return;
+    var sel = bkChecked(), to = $("bk-to").value, err = $("bk-err"), jobs = [];
+    err.textContent = "";
+    for (var i = 0; i < sel.length; i++) {
+      var row = sel[i].closest(".bk-row"), r = bulk.rows[+sel[i].getAttribute("data-i")];
+      var rin = row.querySelector(".bk-rin"), rar = r.rar || (rin ? rin.value.trim() : "");
+      if (!rar) { err.textContent = "Scrivi la rarità per le carte che ne sono prive."; rin && rin.focus(); return; }
+      var q = parseInt(row.querySelector(".bk-n").value, 10);
+      jobs.push(bkItem(r, q >= 1 ? Math.min(q, 999) : 1, rar));
+    }
+    if (!jobs.length) return;
+    var done = 0, merged = 0, failed = false;
+    $("bk-go").disabled = true; $("bk-close").disabled = true;
+    function step() {
+      if (done >= jobs.length) return Promise.resolve();
+      $("bk-info").textContent = "Aggiungo… " + done + " di " + jobs.length;
+      var d = jobs[done];
+      return enqueue(function () { return to === "cards" ? repo.add(d) : repo.addWish(d); }).then(function (res) {
+        if (res && (res.merged || res.existed)) merged++;
+        done++;
+        return step();
+      });
+    }
+    step().then(function () {
+      var plain = jobs.length - merged;
+      say(to === "cards"
+        ? "Aggiunte " + plural(jobs.length, "carta", "carte") + (merged ? ": " + (merged === 1 ? "1 era già presente" : merged + " erano già presenti") + ", copie sommate." : ".")
+        : "Aggiunte ai desideri " + plural(plain, "carta", "carte") + (merged ? ", " + (merged === 1 ? "1 era già presente" : merged + " erano già presenti") + "." : "."), "ok");
+      Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-ck"), function (c) { c.checked = false; });
+      Array.prototype.forEach.call($("bk-list").querySelectorAll(".bk-n"), function (n) { n.hidden = true; n.value = 1; });
+      bkCount(); $("bk-info").textContent = plural(bulk.rows.length, "stampa", "stampe") + " in questa espansione. Spunta quelle che hai.";
+    }).catch(function (e) { fail(e); err.textContent = "Non sono riuscito a salvare tutto: " + done + " di " + jobs.length + " aggiunte."; })
+      .then(function () { $("bk-close").disabled = false; bkCount(); });
+  });
+
   /* ---------- eventi ---------- */
   function onFormChange() { renderDupe(); }
   ["f-name", "f-code", "f-qty", "f-set", "f-rar", "f-ed", "f-lang"].forEach(function (id) {
@@ -1958,6 +2157,7 @@ button.thumb { cursor: pointer; }
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && viewing) closeViewer();
     else if (e.key === "Escape" && editing) closeEditor();
+    else if (e.key === "Escape" && bulk.open && !$("bk-close").disabled) closeBulk();
   });
   $("v-change").addEventListener("click", function () {
     if (!viewing) return;
@@ -2246,6 +2446,7 @@ button.thumb { cursor: pointer; }
 
   /* ---------- avvio ---------- */
   function renderAll() {
+    if (bulk.open) bkMarkOwned();
     if (editing && !listFor(editing.kind).some(function (c) { return c.id === editing.id; })) closeEditor();
     if (viewing && !listFor(viewing.kind).some(function (c) { return c.id === viewing.id && c.img; })) closeViewer();
     $("photo-row").hidden = !(PHOTO_EDIT && photoOK && !readOnly);
@@ -2255,6 +2456,7 @@ button.thumb { cursor: pointer; }
     $("f-lang").innerHTML = LANGS.map(function (l) { return '<option value="' + l[0] + '">' + l[0] + " · " + l[1] + "</option>"; }).join("");
     $("f-lang").value = G.defLang || "IT";
     $("ed-lang").innerHTML = $("f-lang").innerHTML;
+    $("bk-lang").innerHTML = $("f-lang").innerHTML;
     $("dl-rar").innerHTML = RARITIES.map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
     renderDbNote();
     renderAll();
@@ -2276,6 +2478,13 @@ button.thumb { cursor: pointer; }
     "copie": "copies", "versioni": "versions", "espansioni": "sets", "da comprare": "to buy",
     "Lingua del sito": "Site language",
     "Registrala dopo l'acquisto": "Register it after buying",
+    "Aggiungi da un'espansione": "Add from a set", "Aggiunta da un'espansione": "Add from a set",
+    "Aggiungi a": "Add to", "Filtra per nome o codice": "Filter by name or code", "Seleziona tutte": "Select all", "Nessuna": "None", "Aggiungi": "Add",
+    "Scegli un'espansione dall'elenco.": "Choose a set from the list.",
+    "L'elenco delle carte non è disponibile: per l'aggiunta di massa serve l'elenco.": "The card list is not available: adding from a set needs the list.",
+    "Nessuna stampa in questa lingua: prova un'altra lingua o spunta “Tutte le lingue”.": "No print in this language: try another language or tick “All languages”.",
+    "Scrivi la rarità per le carte che ne sono prive.": "Type the rarity for the cards that have none.",
+    "Già nei desideri": "Already in wishlist",
     "Raccolta YGO": "YGO Collection", "ygo-dati": "ygo-data",
     "Ce l'ho già?": "Do I already have it?",
     "Nome o codice, es. Mago Nero o LOB-IT005": "Name or code, e.g. Dark Magician or LOB-EN005",
@@ -2383,6 +2592,13 @@ button.thumb { cursor: pointer; }
     [/^Elenco carte: (\d+) (carta|carte) e (\d+) (espansione|espansioni)(?:, aggiornato al (.+?))?\.( Preparo i codici…)?(?: Ultimo controllo: (.+?)\.)?( Per aggiornarlo sostituisci questo file con la versione nuova\.)?$/, function (m) {
       return "Card list: " + nw(m[1], m[2]) + " and " + nw(m[3], m[4]) + (m[5] ? ", updated on " + m[5] : "") + "." + (m[6] ? " Preparing the codes…" : "") + (m[7] ? " Last check: " + m[7] + "." : "") + (m[8] ? " To update it, replace this file with the new version." : "");
     }],
+    [/^(\d+) (stampa|stampe) in questa espansione\. Spunta quelle che hai\.$/, function (m) { return nw(m[1], m[2]) + " in this set. Tick the ones you have."; }],
+    [/^Aggiungi (\d+) (carta|carte)$/, function (m) { return "Add " + nw(m[1], m[2]); }],
+    [/^Aggiungo… (\d+) di (\d+)$/, function (m) { return "Adding… " + m[1] + " of " + m[2]; }],
+    [/^Già ×(\d+)$/, function (m) { return "Already ×" + m[1]; }],
+    [/^Aggiunte (\d+) (carta|carte)(?:: (?:1 era già presente|(\d+) erano già presenti), copie sommate)?\.$/, function (m) { var t = m[0], mg = /: (1 era|(\d+) erano)/.exec(t); return "Added " + nw(m[1], m[2]) + (mg ? ": " + (mg[2] ? mg[2] + " were" : "1 was") + " already there, copies added together" : "") + "."; }],
+    [/^Aggiunte ai desideri (\d+) (carta|carte)(?:, (1 era|(\d+) erano) già presenti?)?\.$/, function (m) { return "Added to the wishlist: " + nw(m[1], m[2]) + (m[3] ? ", " + (m[4] ? m[4] + " were" : "1 was") + " already there" : "") + "."; }],
+    [/^Non sono riuscito a salvare tutto: (\d+) di (\d+) aggiunte\.$/, function (m) { return "Could not save everything: " + m[1] + " of " + m[2] + " added."; }],
     [/^Modifica: (.+)$/, function (m) { return "Edit: " + m[1]; }],
     [/^Ingrandisci la foto di (.+)$/, function (m) { return "Enlarge the photo of " + m[1]; }],
     [/^Aggiungi una (?:tua )?foto di (.+)$/, function (m) { return "Add a photo of " + m[1]; }],
