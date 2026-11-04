@@ -1433,7 +1433,7 @@ button.thumb { cursor: pointer; }
     fillSelect($("fe"), "Tutte le edizioni", Object.keys(EDITIONS).filter(function (k) { return eds[k]; }).map(function (k) { return [k, EDITIONS[k]]; }), $("fe").value);
     fillSelect($("fl"), "Tutte le lingue", LANGS.filter(function (l) { return langs[l[0]]; }), $("fl").value);
     fillSelect($("fs"), "Tutte le espansioni", Object.keys(sets).sort().map(function (s) { return [s, s]; }), $("fs").value);
-    var key = Object.keys(sets).sort().join("|");
+    var key = (DB ? "db" + DB.sets.length + ":" + (DB.date || "") : "") + "|" + Object.keys(sets).sort().join("|");
     if (key !== lastSetsKey) {
       lastSetsKey = key;
       $("dl-set").innerHTML = (DB ? DB.sets.slice().sort() : Object.keys(sets).sort()).map(function (s) { return '<option value="' + esc(s) + '">'; }).join("");
@@ -1844,12 +1844,20 @@ button.thumb { cursor: pointer; }
 
   /* ---------- aggiunta di massa da un'espansione ---------- */
   var bulk = { open: false, rows: [], si: -1 };
+  var bkHits = 0;
   function bkSetIndex() {
+    bkHits = 0;
     if (dbState !== "ready") return -1;
     var n = norm($("bk-set").value);
     if (!n) return -1;
-    for (var i = 0; i < DB.sets.length; i++) if (norm(DB.sets[i]) === n) return i;
-    return -1;
+    var i, toks = words($("bk-set").value).split(" ").filter(Boolean), found = -1;
+    for (i = 0; i < DB.sets.length; i++) if (norm(DB.sets[i]) === n) return i;
+    if (!toks.length || words($("bk-set").value).length < 2) return -1;
+    for (i = 0; i < DB.sets.length; i++) {
+      var w = words(DB.sets[i]);
+      if (toks.every(function (t) { return w.indexOf(t) >= 0; })) { bkHits++; found = i; }
+    }
+    return bkHits === 1 ? found : -1;
   }
   function bkCollect(si, lang, all) {
     var out = [];
@@ -1882,7 +1890,12 @@ button.thumb { cursor: pointer; }
     bulk.rows = [];
     list.innerHTML = "";
     if (dbState !== "ready") { info.textContent = "L'elenco delle carte non è disponibile: per l'aggiunta di massa serve l'elenco."; bkCount(); return; }
-    if (bulk.si < 0) { info.textContent = "Scegli un'espansione dall'elenco."; bkCount(); return; }
+    if (bulk.si < 0) {
+      info.textContent = !norm($("bk-set").value) ? "Scegli un'espansione dall'elenco."
+        : bkHits > 1 ? "Più espansioni corrispondono (" + bkHits + "): scegli dall'elenco o scrivi il nome completo."
+        : "Nessuna espansione trovata con questo nome.";
+      bkCount(); return;
+    }
     var rows = bkCollect(bulk.si, $("bk-lang").value, $("bk-all").checked);
     bulk.rows = rows;
     if (!rows.length) { info.textContent = "Nessuna stampa in questa lingua: prova un'altra lingua o spunta “Tutte le lingue”."; bkCount(); return; }
@@ -1935,8 +1948,9 @@ button.thumb { cursor: pointer; }
   $("bk-open").addEventListener("click", openBulk);
   $("bk-close").addEventListener("click", closeBulk);
   $("bulk").addEventListener("mousedown", function (e) { if (e.target === this) closeBulk(); });
-  ["bk-set", "bk-lang", "bk-all"].forEach(function (id) { $(id).addEventListener("change", bkRender); });
-  $("bk-set").addEventListener("input", function () { if (bkSetIndex() !== bulk.si) bkRender(); });
+  ["bk-lang", "bk-all"].forEach(function (id) { $(id).addEventListener("change", bkRender); });
+  $("bk-set").addEventListener("input", bkRender);
+  $("bk-set").addEventListener("change", function () { var i = bkSetIndex(); if (i >= 0) $("bk-set").value = DB.sets[i]; bkRender(); });
   $("bk-ed").addEventListener("change", bkMarkOwned);
   $("bk-to").addEventListener("change", bkMarkOwned);
   $("bk-q").addEventListener("input", bkFilter);
@@ -2483,6 +2497,7 @@ button.thumb { cursor: pointer; }
     "Scegli un'espansione dall'elenco.": "Choose a set from the list.",
     "L'elenco delle carte non è disponibile: per l'aggiunta di massa serve l'elenco.": "The card list is not available: adding from a set needs the list.",
     "Nessuna stampa in questa lingua: prova un'altra lingua o spunta “Tutte le lingue”.": "No print in this language: try another language or tick “All languages”.",
+    "Nessuna espansione trovata con questo nome.": "No set found with this name.",
     "Scrivi la rarità per le carte che ne sono prive.": "Type the rarity for the cards that have none.",
     "Già nei desideri": "Already in wishlist",
     "Raccolta YGO": "YGO Collection", "ygo-dati": "ygo-data",
@@ -2593,6 +2608,7 @@ button.thumb { cursor: pointer; }
       return "Card list: " + nw(m[1], m[2]) + " and " + nw(m[3], m[4]) + (m[5] ? ", updated on " + m[5] : "") + "." + (m[6] ? " Preparing the codes…" : "") + (m[7] ? " Last check: " + m[7] + "." : "") + (m[8] ? " To update it, replace this file with the new version." : "");
     }],
     [/^(\d+) (stampa|stampe) in questa espansione\. Spunta quelle che hai\.$/, function (m) { return nw(m[1], m[2]) + " in this set. Tick the ones you have."; }],
+    [/^Più espansioni corrispondono \((\d+)\): scegli dall'elenco o scrivi il nome completo\.$/, function (m) { return "Several sets match (" + m[1] + "): choose from the list or type the full name."; }],
     [/^Aggiungi (\d+) (carta|carte)$/, function (m) { return "Add " + nw(m[1], m[2]); }],
     [/^Aggiungo… (\d+) di (\d+)$/, function (m) { return "Adding… " + m[1] + " of " + m[2]; }],
     [/^Già ×(\d+)$/, function (m) { return "Already ×" + m[1]; }],
